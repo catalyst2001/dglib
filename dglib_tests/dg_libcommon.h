@@ -1,8 +1,9 @@
 #pragma once
-#include <stddef.h>
+#include <assert.h>
+#include <stdlib.h>
 #include <stdint.h>
-#include <assert.h> //TODO: K.D. replace this later
-#include <stdbool.h> //TODO: K.D. replace this later
+#include <string.h>
+#include <stdbool.h>
 
 enum DGERR {
 	DGERR_NONE = 0,

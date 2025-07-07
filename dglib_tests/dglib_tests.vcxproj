@@ -124,13 +124,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dg_alloc.c" />
-    <ClCompile Include="dg_vector.c" />
+    <ClCompile Include="dg_darray.c" />
+    <ClCompile Include="dg_list.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dg_alloc.h" />
     <ClInclude Include="dg_libcommon.h" />
-    <ClInclude Include="dg_vector.h" />
+    <ClInclude Include="dg_darray.h" />
+    <ClInclude Include="dg_list.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

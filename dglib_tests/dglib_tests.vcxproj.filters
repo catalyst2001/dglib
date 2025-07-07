@@ -18,21 +18,27 @@
     <ClCompile Include="main.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="dg_vector.c">
+    <ClCompile Include="dg_darray.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="dg_alloc.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="dg_list.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dg_vector.h">
+    <ClInclude Include="dg_darray.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
     <ClInclude Include="dg_libcommon.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
     <ClInclude Include="dg_alloc.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="dg_list.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
   </ItemGroup>

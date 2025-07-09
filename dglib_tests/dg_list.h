@@ -73,3 +73,26 @@ static inline bool list_add_front(dg_list_t* plist, const void* psrc) {
 	memcpy(pnode->data, psrc, plist->elemsize);
 	return true;
 }
+
+static inline dg_llnode_t* list_get_at(dg_list_t* plist, size_t idx) {
+	dg_llnode_t* pnode = plist->pbegin;
+	for (size_t i = 0; pnode; pnode = pnode->pnext, i++)
+		if (i == idx)
+			return pnode;
+
+	return NULL;
+}
+
+static inline bool list_free(dg_list_t* plist) {
+	dg_llnode_t* pnode = plist->pbegin, *pcurnode;
+	if (!pnode)
+		return false;
+
+	while (pnode) {
+		pcurnode = pnode;
+		pnode = pnode->pnext;
+		free(pcurnode);
+	}
+	plist->pbegin = plist->pend = NULL;
+	return true;
+}

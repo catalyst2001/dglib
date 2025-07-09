@@ -35,3 +35,5 @@ extern dg_memmgr_dt_t *gpmmdt;
 #define free(ptr) (gpmmdt->mem_free(ptr))
 #endif
 #endif
+
+#define DG_NEW(type) ((type *)calloc(1, sizeof(type)))

@@ -27,6 +27,12 @@
     <ClCompile Include="dg_list.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="dg_queue.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="dg_sync.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dg_darray.h">
@@ -39,6 +45,15 @@
       <Filter>Исходные файлы</Filter>
     </ClInclude>
     <ClInclude Include="dg_list.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="dg_queue.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="dg_atomic.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="dg_sync.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
   </ItemGroup>

@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+typedef void* dg_handle_t;
+
 enum DGERR {
 	DGERR_NONE = 0,
 	DGERR_OUT_OF_MEMORY,

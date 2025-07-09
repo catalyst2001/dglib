@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "dg_darray.h"
 #include "dg_list.h"
+#include "dg_queue.h"
 
 #define DG_MEMNOVERRIDE
 #include "dg_alloc.h"
@@ -73,12 +74,38 @@ dg_memmgr_dt_t* gpmmdt = &dt;
 
 bool test_list()
 {
+	dg_queue_t queue = queue_init(int, 16);
+	if (!queue_alloc(&queue)) {
+		printf("queue alloc failed!\n");
+		return false;
+	}
+
+
+
+
+	return true;
+}
+
+bool test_list()
+{
 	dg_list_t list = list_init(int);
 	for (int i = 0; i < 10; i++)
 		list_add_back(&list, &i);
 
 	int front_value = 1000;
 	list_add_front(&list, &front_value);
+
+	dg_llnode_t* pnode = list.pbegin;
+	while (pnode) {
+		printf("%d ", *((int*)pnode->data));
+		pnode = pnode->pnext;
+	}
+
+	printf("elem at 0: %d\n", *((int *)list_get_at(&list, 0)->data));
+	printf("elem at 1: %d\n", *((int *)list_get_at(&list, 1)->data));
+
+	list_free(&list);
+	return true;
 }
 
 bool test_darray3d()
@@ -208,6 +235,7 @@ int main()
 	RUN_TEST(test_darray1d, "1D array testing failed!")
 	RUN_TEST(test_darray2d, "2D array testing failed!")
 	RUN_TEST(test_darray3d, "3D array testing failed!")
+	RUN_TEST(test_list, "list testing failed!")
 
 	return 0;
 }

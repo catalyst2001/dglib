@@ -53,3 +53,36 @@ bool  mpmc_queue_add_back(dg_mtqueue_mpmc_t* pqueue, const void* psrc);
 bool  mpmc_queue_get_front(void* pdst, dg_mtqueue_mpmc_t* q);
 bool  mpmc_queue_is_empty(dg_mtqueue_mpmc_t* pqueue);
 bool  mpmc_queue_is_full(dg_mtqueue_mpmc_t* pqueue);
+
+/**
+* multithreaded interlocked queue
+*/
+typedef struct dg_mtqueue_s {
+	size_t        elemsize;
+	size_t        capacity;
+	size_t        head;
+	size_t        tail;
+	atomic_size_t count;
+	uint8_t*      pdata;
+	dg_cond_t     not_empty;
+	dg_cond_t     not_full;
+	dg_mutex_t    head_mtx;
+	dg_mutex_t    tail_mtx;
+} dg_mtqueue_t;
+
+bool    mtqueue_alloc(dg_mtqueue_t *q, size_t capacity);
+bool    mtqueue_free(dg_mtqueue_t* q);
+bool    mtqueue_add_at(dg_mtqueue_t* q, size_t idx, const void* psrc);
+void*   mtqueue_get_at(dg_mtqueue_t* pqueue, size_t idx);
+bool    mtqueue_add_back(dg_mtqueue_t* pqueue, const void* psrc);
+void*   mtqueue_get_back(dg_mtqueue_t* pqueue);
+bool    mtqueue_add_front(dg_mtqueue_t* pqueue, const void* psrc);
+void*   mtqueue_get_front(dg_mtqueue_t* pqueue);
+static inline bool mtqueue_is_empty(dg_queue_t* pqueue) {
+	return ATOMIC_LOAD(pqueue->count) == 0;
+}
+static inline bool mtqueue_is_full(dg_queue_t* pqueue) {
+	atomic_size_t count = ATOMIC_LOAD(pqueue->count);
+	atomic_size_t cap = ATOMIC_LOAD(pqueue->capacity);
+	return count >= cap;
+}

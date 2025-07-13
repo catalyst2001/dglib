@@ -7,7 +7,7 @@
 
 #define darray_get_internal(pd, idx) ((pd)->pdata + (idx) * (pd)->elemsize)
 
-static bool try_ensure_capacity(darray_t* pd, size_t newcap)
+static bool try_ensure_capacity(dg_darray_t* pd, size_t newcap)
 {
   if (!pd->pdata || newcap > pd->capacity) {
     pd->capacity = newcap + pd->reserve;
@@ -20,38 +20,38 @@ static bool try_ensure_capacity(darray_t* pd, size_t newcap)
   return true;
 }
 
-void* darray_get_ex(darray_t* pd, size_t idx)
+void* darray_get_ex(dg_darray_t* pd, size_t idx)
 {
   assert(idx < pd->size && "idx out of bounds");
   return darray_get_internal(pd, idx);
 }
 
-int darray_resize(darray_t* pd, size_t newsize)
+int darray_resize(dg_darray_t* pd, size_t newsize)
 {
   if (newsize > pd->capacity) {
     int st = darray_realloc(pd, newsize);
-    if (st != DGERR_NONE) return st;
+    if (st != DGERR_SUCCESS) return st;
   }
   pd->size = newsize;
-  return DGERR_NONE;
+  return DGERR_SUCCESS;
 }
 
-int darray_realloc(darray_t* pd, size_t newcap) {
+int darray_realloc(dg_darray_t* pd, size_t newcap) {
   if (!try_ensure_capacity(pd, newcap))
     return DGERR_OUT_OF_MEMORY;
 
-  return DGERR_NONE;
+  return DGERR_SUCCESS;
 }
 
-int darray_shrink_to_fit(darray_t* pd)
+int darray_shrink_to_fit(dg_darray_t* pd)
 {
   if (pd->capacity > pd->size)
     return darray_realloc(pd, pd->size);
 
-  return DGERR_NONE;
+  return DGERR_SUCCESS;
 }
 
-void darray_move(darray_t* dst, darray_t* src)
+void darray_move(dg_darray_t* dst, dg_darray_t* src)
 {
   dst->capacity = src->capacity;
   dst->elemsize = src->elemsize;
@@ -61,9 +61,9 @@ void darray_move(darray_t* dst, darray_t* src)
   darray_reset(src);
 }
 
-int darray_copy(darray_t* dst, const darray_t* src)
+int darray_copy(dg_darray_t* dst, const dg_darray_t* src)
 {
-  if (src->capacity == 0) return DGERR_NONE;
+  if (src->capacity == 0) return DGERR_SUCCESS;
   dst->elemsize = src->elemsize;
   dst->reserve = src->reserve;
   dst->capacity = src->capacity;
@@ -71,10 +71,10 @@ int darray_copy(darray_t* dst, const darray_t* src)
   dst->pdata = malloc(src->capacity * src->elemsize);
   if (!dst->pdata) return DGERR_OUT_OF_MEMORY;
   memcpy(dst->pdata, src->pdata, src->capacity * src->elemsize);
-  return DGERR_NONE;
+  return DGERR_SUCCESS;
 }
 
-void darray_insert_from(darray_t* pd, const darray_t* ps, size_t from, size_t count)
+void darray_insert_from(dg_darray_t* pd, const dg_darray_t* ps, size_t from, size_t count)
 {
   assert(ps && pd);
   assert(from + count <= ps->size && "source range out of bounds");
@@ -87,19 +87,19 @@ void darray_insert_from(darray_t* pd, const darray_t* ps, size_t from, size_t co
   pd->size += count;
 }
 
-void darray_clear(darray_t* pd)
+void darray_clear(dg_darray_t* pd)
 {
   pd->size = 0;
 }
 
-void darray_reset(darray_t* pd)
+void darray_reset(dg_darray_t* pd)
 {
   pd->capacity = 0;
   pd->size = 0;
   pd->pdata = NULL;
 }
 
-bool darray_free(darray_t* pd)
+bool darray_free(dg_darray_t* pd)
 {
   if (pd->pdata) {
     free(pd->pdata);
@@ -109,26 +109,51 @@ bool darray_free(darray_t* pd)
   return false;
 }
 
-bool darray_push_back(darray_t* pd, const void* src)
+void* darray_add_back(dg_darray_t* pd)
 {
-  if (!try_ensure_capacity(pd, pd->size + 1)) return false;
-  memcpy(darray_get_internal(pd, pd->size), src, pd->elemsize);
+  void* ptr;
+  if (!try_ensure_capacity(pd, pd->size + 1))
+    return NULL;
+
+  ptr = darray_get_internal(pd, pd->size);
   pd->size++;
-  return true;
+  return ptr;
 }
 
-bool darray_push_front(darray_t* pd, const void* src)
+bool darray_push_back(dg_darray_t* pd, const void* src)
 {
-  if (!try_ensure_capacity(pd, pd->size + 1)) return false;
+  void* pelem = darray_add_back(pd);
+  if (pelem) {
+    memcpy(pelem, src, pd->elemsize);
+    return true;
+  }
+  return false;
+}
+
+void* darray_add_front(dg_darray_t* pd)
+{
+  if (!try_ensure_capacity(pd, pd->size + 1))
+    return NULL;
+
   memmove(pd->pdata + pd->elemsize,
     pd->pdata,
     pd->size * pd->elemsize);
-  memcpy(pd->pdata, src, pd->elemsize);
+
   pd->size++;
-  return true;
+  return pd->pdata;
 }
 
-bool darray_pop_back(void* dst, darray_t* pd)
+bool darray_push_front(dg_darray_t* pd, const void* src)
+{
+  void* pelem = darray_add_front(pd);
+  if (pelem) {
+    memcpy(pd->pdata, src, pd->elemsize);
+    return true;
+  }
+  return false;
+}
+
+bool darray_pop_back(void* dst, dg_darray_t* pd)
 {
   if (pd->size == 0) return false;
   pd->size--;
@@ -138,7 +163,7 @@ bool darray_pop_back(void* dst, darray_t* pd)
   return true;
 }
 
-bool darray_pop_front(void* dst, darray_t* pd)
+bool darray_pop_front(void* dst, dg_darray_t* pd)
 {
   if (pd->size == 0) return false;
   memcpy(dst, pd->pdata, pd->elemsize);
@@ -149,7 +174,7 @@ bool darray_pop_front(void* dst, darray_t* pd)
   return true;
 }
 
-int darray_shift(darray_t* pd, size_t from, size_t to, size_t count)
+int darray_shift(dg_darray_t* pd, size_t from, size_t to, size_t count)
 {
   assert(from + count <= pd->size && "shift range out of bounds");
   assert((to + count) <= pd->capacity && "shift target out of bounds");
@@ -158,6 +183,6 @@ int darray_shift(darray_t* pd, size_t from, size_t to, size_t count)
     pd->pdata + from * pd->elemsize,
     count * pd->elemsize
   );
-  return DGERR_NONE;
+  return DGERR_SUCCESS;
 }
 

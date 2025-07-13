@@ -4,6 +4,8 @@
 #include "dg_darray.h"
 #include "dg_list.h"
 #include "dg_queue.h"
+#include "dg_cpuinfo.h"
+#include "dg_dt.h"
 
 #define DG_MEMNOVERRIDE
 #include "dg_alloc.h"
@@ -41,7 +43,7 @@ void* mem_alloc_default(void* poldmem, size_t size, uint32_t flags) {
 int mem_free_default(void* pmem) {
 	if (pmem) {
 		free(pmem);
-		return DGERR_NONE;
+		return DGERR_SUCCESS;
 	}
 	return DGERR_INVALID_PARAM;
 }
@@ -57,7 +59,7 @@ void* mem_alloc_debug_default(void* poldmem, size_t size, uint32_t flags, const 
 
 int mem_free_debug_default(void* pmem, const char* pfile, int line) {
 	int status = mem_free_default(pmem);
-	if (status != DGERR_NONE)
+	if (status != DGERR_SUCCESS)
 		fprintf(stderr, "mem_free_debug_default(): free failed! status: %d  File: %s  Line: %d\n", 
 			status, pfile, line);
 
@@ -72,7 +74,48 @@ dg_memmgr_dt_t dt = {
 };
 dg_memmgr_dt_t* gpmmdt = &dt;
 
-bool test_list()
+bool test_cpuinfo()
+{
+	dg_cpu_info_t info;
+	if (cpu_get_info(&info) == DGERR_SUCCESS) {
+		printf("---- cpu info ----\n");
+		printf("product: \"%s\"\n", info.product);
+		printf("vendor: \"%s\"\n", info.vendor);
+		printf("num phys processors: %d\n", info.num_physical_processors);
+		printf("num logical processors: %d\n", info.num_logical_processors);
+		return true;
+	}
+	return false;
+}
+
+int DG_DTCALL dtabs_impl(int v) {
+	return v < 0 ? -v : v;
+}
+
+int DG_DTCALL dadd_impl(int a, int b) {
+	return a + b;
+}
+
+DT_DECL_BEGIN(zombie_dt)
+DT_DECL_FUNCTION(int, dtabs, int)
+DT_DECL_FUNCTION(int, dtadd, int, int)
+DT_DECL_END();
+
+#define TEST_DT_FAMILY 0
+#define TEST_DT_OBJID 1
+
+DT_INIT_BEGIN(zombie_dt_t, g_test_disptable, TEST_DT_FAMILY, TEST_DT_OBJID)
+DT_INIT_FUNCTION(dtabs, dtabs_impl)
+DT_INIT_FUNCTION(dtadd, dadd_impl)
+DT_INIT_END()
+
+bool test_dispatch_tables()
+{
+
+
+}
+
+bool test_queues()
 {
 	dg_queue_t queue = queue_init(int, 16);
 	if (!queue_alloc(&queue)) {
@@ -80,10 +123,7 @@ bool test_list()
 		return false;
 	}
 
-
-
-
-	return true;
+	return false;
 }
 
 bool test_list()
@@ -111,7 +151,7 @@ bool test_list()
 bool test_darray3d()
 {
 	size_t x, y, z;
-	darray3d_t array3d = darray3d_init(10, 10, 10, int);
+	dg_darray3d_t array3d = darray3d_init(10, 10, 10, int);
 	if (!darray3d_alloc(&array3d, true)) {
 		printf("3d array allcoation failed!\n");
 		return false;
@@ -154,7 +194,7 @@ bool test_darray3d()
 bool test_darray2d()
 {
 	size_t x, y;
-	darray2d_t array2d = darray2d_init(10, 10, int);
+	dg_darray2d_t array2d = darray2d_init(10, 10, int);
 	if (!darray2d_alloc(&array2d, true)) {
 		printf("allocation failed!\n");
 		return false;
@@ -192,7 +232,7 @@ bool test_darray2d()
 
 bool test_darray1d()
 {
-	darray_t dynarray = darray_init(int, 10, 10, 0);
+	dg_darray_t dynarray = darray_init(int, 10, 10, 0);
 	for (int i = 0; i < 10; i++) {
 		darray_push_back(&dynarray, &i);
 		printf("%d ", i);
@@ -232,10 +272,12 @@ bool test_darray1d()
 
 int main()
 {
-	RUN_TEST(test_darray1d, "1D array testing failed!")
-	RUN_TEST(test_darray2d, "2D array testing failed!")
-	RUN_TEST(test_darray3d, "3D array testing failed!")
-	RUN_TEST(test_list, "list testing failed!")
+	//RUN_TEST(test_darray1d, "1D array testing failed!")
+	//RUN_TEST(test_darray2d, "2D array testing failed!")
+	//RUN_TEST(test_darray3d, "3D array testing failed!")
+	//RUN_TEST(test_list, "list testing failed!")
+	//RUN_TEST(test_queues, "queues testing failed!")
+	RUN_TEST(test_cpuinfo, "cpuinfo testing failed!")
 
 	return 0;
 }

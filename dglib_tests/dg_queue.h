@@ -12,17 +12,18 @@ typedef struct dg_queue_s {
 	uint8_t* pdata;
 } dg_queue_t;
 
-#define queue_init(type, inital_cap) {\
+#define queue_init(type, inital_cap) ((dg_queue_t){\
 	.elemsize = sizeof(type),\
 	.capacity = inital_cap,\
 	.head=0, .tail=0,\
 	.count=0,\
 	.pdata=NULL\
-}
+})
+
 bool  queue_alloc(dg_queue_t *pqueue);
 bool  queue_free(dg_queue_t* pqueue);
-bool  queue_add_at(dg_queue_t* pqueue, size_t idx, const void *psrc);
-void *queue_get_at(dg_queue_t* pqueue, size_t idx);
+//bool  queue_add_at(dg_queue_t* pqueue, size_t idx, const void *psrc);
+//void *queue_get_at(dg_queue_t* pqueue, size_t idx);
 bool  queue_add_back(dg_queue_t* pqueue, const void* psrc);
 void *queue_get_back(dg_queue_t* pqueue);
 bool  queue_add_front(dg_queue_t* pqueue, const void* psrc);
@@ -58,31 +59,26 @@ bool  mpmc_queue_is_full(dg_mtqueue_mpmc_t* pqueue);
 * multithreaded interlocked queue
 */
 typedef struct dg_mtqueue_s {
-	size_t        elemsize;
-	size_t        capacity;
-	size_t        head;
-	size_t        tail;
-	atomic_size_t count;
-	uint8_t*      pdata;
-	dg_cond_t     not_empty;
-	dg_cond_t     not_full;
-	dg_mutex_t    head_mtx;
-	dg_mutex_t    tail_mtx;
+	size_t         elemsize;
+	size_t         capacity;
+	atomic_size_t  count;
+	size_t         head;
+	size_t         tail;
+	uint8_t       *pdata;
+	dg_semaphore_t slots_sem; //wait free slot
+	dg_semaphore_t items_sem; //wait get item
+	dg_mutex_t     head_mtx;
+	dg_mutex_t     tail_mtx;
 } dg_mtqueue_t;
 
-bool    mtqueue_alloc(dg_mtqueue_t *q, size_t capacity);
-bool    mtqueue_free(dg_mtqueue_t* q);
-bool    mtqueue_add_at(dg_mtqueue_t* q, size_t idx, const void* psrc);
-void*   mtqueue_get_at(dg_mtqueue_t* pqueue, size_t idx);
-bool    mtqueue_add_back(dg_mtqueue_t* pqueue, const void* psrc);
-void*   mtqueue_get_back(dg_mtqueue_t* pqueue);
-bool    mtqueue_add_front(dg_mtqueue_t* pqueue, const void* psrc);
-void*   mtqueue_get_front(dg_mtqueue_t* pqueue);
-static inline bool mtqueue_is_empty(dg_queue_t* pqueue) {
-	return ATOMIC_LOAD(pqueue->count) == 0;
-}
-static inline bool mtqueue_is_full(dg_queue_t* pqueue) {
-	atomic_size_t count = ATOMIC_LOAD(pqueue->count);
-	atomic_size_t cap = ATOMIC_LOAD(pqueue->capacity);
-	return count >= cap;
-}
+bool  mtqueue_alloc(dg_mtqueue_t *q, size_t elemsize, size_t capacity);
+bool  mtqueue_free(dg_mtqueue_t* q);
+//bool  mtqueue_add_at(dg_mtqueue_t* q, size_t idx, const void* psrc);
+bool  mtqueue_is_empty(dg_mtqueue_t* pqueue);
+bool  mtqueue_is_full(dg_mtqueue_t* pqueue);
+void  mtqueue_add_back(dg_mtqueue_t* pqueue, const void* psrc);
+void* mtqueue_get_back(dg_mtqueue_t* pqueue);
+void  mtqueue_add_front(dg_mtqueue_t* pqueue, const void* psrc);
+void* mtqueue_get_front(dg_mtqueue_t* pqueue);
+bool  mtqueue_try_add_back(dg_mtqueue_t* pqueue, const void* psrc);
+bool  mtqueue_try_add_front(dg_mtqueue_t* pqueue, const void* psrc);

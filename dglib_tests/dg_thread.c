@@ -1,4 +1,5 @@
 #include "dg_thread.h"
+#include "dg_alloc.h"
 
 /**
 * thread_internal_new_data

@@ -83,7 +83,7 @@ dg_semaphore_t semaphore_alloc(int initial_value, int max_count, const char* pna
     max_count = INFINITE;
 
   HANDLE hsem = CreateSemaphoreA(NULL, (LONG)initial_value, (LONG)max_count, NULL);
-  if (hsem == ERROR_INVALID_HANDLE)
+  if (hsem == NULL)
     return NULL;
 
   return (dg_semaphore_t)hsem;

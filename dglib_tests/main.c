@@ -6,6 +6,10 @@
 #include "dg_queue.h"
 #include "dg_cpuinfo.h"
 #include "dg_dt.h"
+#include "dg_handle.h"
+#include "dg_bitvec.h"
+#include "dg_thread.h"
+#include "dg_threadpool.h"
 
 #define DG_MEMNOVERRIDE
 #include "dg_alloc.h"
@@ -91,30 +95,26 @@ bool test_cpuinfo()
 int DG_DTCALL dtabs_impl(int v) {
 	return v < 0 ? -v : v;
 }
-
-int DG_DTCALL dadd_impl(int a, int b) {
+int DG_DTCALL dtadd_impl(int a, int b) {
 	return a + b;
 }
 
-DT_DECL_BEGIN(zombie_dt)
-DT_DECL_FUNCTION(int, dtabs, int)
-DT_DECL_FUNCTION(int, dtadd, int, int)
-DT_DECL_END();
+bool test_dispatch_tables()
+{
+	DT_DECL_BEGIN(zombie_dt)
+	DT_DECL_FUNCTION(int, dtabs, int)
+	DT_DECL_FUNCTION(int, dtadd, int, int)
+	DT_DECL_END();
 
 #define TEST_DT_FAMILY 0
 #define TEST_DT_OBJID 1
 
-DT_INIT_BEGIN(zombie_dt_t, g_test_disptable, TEST_DT_FAMILY, TEST_DT_OBJID)
-DT_INIT_FUNCTION(dtabs, dtabs_impl)
-DT_INIT_FUNCTION(dtadd, dadd_impl)
-DT_INIT_END()
-
-bool test_dispatch_tables()
-{
-
-
+	DT_INIT_BEGIN(zombie_dt_t, g_test_disptable, TEST_DT_FAMILY, TEST_DT_OBJID)
+	DT_INIT_FUNCTION(dtabs, dtabs_impl)
+	DT_INIT_FUNCTION(dtadd, dtadd_impl)
+	DT_INIT_END()
+	return true;
 }
-
 bool test_queues()
 {
 	dg_queue_t queue = queue_init(int, 16);
@@ -125,7 +125,6 @@ bool test_queues()
 
 	return false;
 }
-
 bool test_list()
 {
 	dg_list_t list = list_init(int);
@@ -147,7 +146,6 @@ bool test_list()
 	list_free(&list);
 	return true;
 }
-
 bool test_darray3d()
 {
 	size_t x, y, z;
@@ -190,7 +188,6 @@ bool test_darray3d()
 	scanf_s("%d", &yn);
 	return !!yn;
 }
-
 bool test_darray2d()
 {
 	size_t x, y;
@@ -229,7 +226,6 @@ bool test_darray2d()
 	getchar();//read '\n'
 	return !!yn;
 }
-
 bool test_darray1d()
 {
 	dg_darray_t dynarray = darray_init(int, 10, 10, 0);
@@ -262,6 +258,65 @@ bool test_darray1d()
 	darray_free(&dynarray);
 	return true;
 }
+bool test_handles()
+{
+	dg_handle_alloc_t allocator;
+	if (!ha_init(&allocator, sizeof(int), 1024, 1)) {
+		printf("failed to initialize handle allocator\n");
+		return false;
+	}
+
+	/* alloc handle */
+	handle_t           opened_handle;
+	dg_halloc_result_t allocated;
+	if (!ha_alloc_handle(&allocated, &allocator)) {
+		printf("ha_alloc_handle() failed\n");
+		return false;
+	}
+	opened_handle = allocated.new_handle;
+	*((int*)allocated.phandle_body) = 1000;
+	ha_free_handle(&allocator, opened_handle);
+
+	dg_darray_t opened_handles = darray_init(handle_t, 1024, 1024, 0);
+	for (size_t i = 0; i < 512; i++) {
+		if (ha_alloc_handle(&allocated, &allocator)) {
+			//printf("allocated handle: %");
+			handle_t handle = allocated.new_handle;
+			if (!darray_push_back(&opened_handles, &handle)) {
+				printf("darray_push_back() failed!");
+				return false;
+			}
+		}
+		else {
+			printf("handle allocation failed!\n");
+			return false;
+		}
+	}
+
+	printf("=============== list handles ===============\n");
+	for (size_t i = 0; i < darray_get_size(&opened_handles); i++) {
+		handle_t value = darray_get(&opened_handles, i, handle_t);
+		printf("[handle %zd] idx: %u  gen: %u\n", i, value.index, value.gen);
+		if (!ha_free_handle(&allocator, value)) {
+			printf("\n");
+			return false;
+		}
+	}
+	printf("\n");
+
+	printf("test double-free handle: ");
+	if (ha_free_handle(&allocator, opened_handle)) {
+		printf("double free handle completed with no errors! it's abnormal!\n");
+		return false;
+	}
+	else {
+		printf("OK!\n");
+	}
+
+	darray_free(&opened_handles);
+	ha_deinit(&allocator);
+	return true;
+}
 
 #define RUN_TEST(func, failmsg) do {\
 	if(!func()) {\
@@ -277,7 +332,8 @@ int main()
 	//RUN_TEST(test_darray3d, "3D array testing failed!")
 	//RUN_TEST(test_list, "list testing failed!")
 	//RUN_TEST(test_queues, "queues testing failed!")
-	RUN_TEST(test_cpuinfo, "cpuinfo testing failed!")
+	//RUN_TEST(test_cpuinfo, "cpuinfo testing failed!")
+	RUN_TEST(test_handles, "cpuinfo testing failed!")
 
 	return 0;
 }

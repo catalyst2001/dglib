@@ -1,7 +1,7 @@
 #pragma once
 #include "dg_libcommon.h"
-#include "dg_alloc.h"
 #include "dg_darray.h"
+#include "dg_linalloc.h"
 
 typedef dg_handle_t dg_thrd_t;
 struct dg_thrd_data_s;

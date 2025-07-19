@@ -27,7 +27,7 @@ int threadpool_init(dg_threadpool_t* ptp, size_t num_threads)
 
   /* init containers */
   ptp->workers = darray_init(dg_worker_t, cpuinfo.num_logical_processors, 1, 0);
-  if (!mtqueue_alloc(&ptp->tasks, DG_TASKS_QUEUE_DEFAULT_LIMIT)) {
+  if (!mtqueue_alloc(&ptp->tasks, 4, DG_TASKS_QUEUE_DEFAULT_LIMIT)) {
     DG_ERROR("threadpool_init(): mtqueue_alloc() failed");
     return DGERR_OUT_OF_MEMORY;
   }

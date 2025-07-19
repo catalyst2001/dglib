@@ -57,6 +57,9 @@
     <ClCompile Include="dg_bitvec.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="dg_time.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dg_darray.h">
@@ -100,6 +103,9 @@
     </ClInclude>
     <ClInclude Include="dg_handle.h">
       <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="dg_time.h">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

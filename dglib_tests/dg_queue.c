@@ -220,8 +220,8 @@ bool mtqueue_alloc(dg_mtqueue_t* q, size_t elemsize, size_t capacity)
 {
   q->elemsize = elemsize;
   q->capacity = capacity;
-  q->pdata = (uint8_t*)calloc(q->capacity, 1);
-  dg_atomic_store(q->count, 0);
+  q->pdata = (uint8_t*)calloc(q->capacity, q->elemsize);
+  dg_atomic_store(&q->count, 0);
   q->head = 0;
   q->tail = 0;
   q->head_mtx = mutex_alloc("dg_mtqueue_t:head_mtx");

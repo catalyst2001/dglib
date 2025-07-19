@@ -81,15 +81,27 @@ dg_memmgr_dt_t* gpmmdt = &dt;
 bool test_cpuinfo()
 {
 	dg_cpu_info_t info;
-	if (cpu_get_info(&info) == DGERR_SUCCESS) {
-		printf("---- cpu info ----\n");
-		printf("product: \"%s\"\n", info.product);
-		printf("vendor: \"%s\"\n", info.vendor);
-		printf("num phys processors: %d\n", info.num_physical_processors);
-		printf("num logical processors: %d\n", info.num_logical_processors);
-		return true;
+	if (cpu_get_info(&info) != DGERR_SUCCESS) {
+		printf("cpu_get_info() failed\n");
+		return false;
 	}
-	return false;
+	printf("---- cpu info ----\n");
+	printf("product: \"%s\"\n", info.product);
+	printf("vendor: \"%s\"\n", info.vendor);
+	printf("num phys processors: %d\n", info.num_physical_processors);
+	printf("num logical processors: %d\n", info.num_logical_processors);
+
+	double freq_hz;
+	while (1) {
+		dg_delay_ms(100);
+		if (cpu_get_current_frequency_ex(&freq_hz) != DGERR_SUCCESS) {
+			printf("cpu_get_current_frequency_ex() failed\n");
+			return false;
+		}
+		printf("%lf speed in Hz\n", freq_hz);
+		printf("%lf speed in GHz\n", freq_hz / 1e9);
+	}
+	return true;
 }
 
 int DG_DTCALL dtabs_impl(int v) {
@@ -317,6 +329,163 @@ bool test_handles()
 	ha_deinit(&allocator);
 	return true;
 }
+bool test_bitvec()
+{
+	size_t i;
+	dg_dbitvec_t bitvec;
+	enum { TEST_BITVEC_SIZE=256 };
+	if (!dbitvec_init(&bitvec, TEST_BITVEC_SIZE)) {
+		printf("dbitvec_init() failed\n");
+		return false;
+	}
+
+	for (i = 0; i < TEST_BITVEC_SIZE; i++)
+		dbitvec_set(&bitvec, i, (int)(i & 1u));
+
+	printf("----------- bitvec test ----------\n");
+	for (i = 0; i < TEST_BITVEC_SIZE; i++)
+		printf("   bit %zd value: %d\n", i, (int)dbitvec_get(&bitvec, i));
+
+	dbitvec_deinit(&bitvec);
+}
+
+void some_work(uint32_t n)
+{
+	printf("some_work(): left %d times\n", n);
+	if (!n)
+		return;
+
+	uint32_t i = 1;
+	while (i)
+		i++;
+
+	some_work(n-1);
+}
+
+int thread_proc(struct dg_thrd_data_s* ptinfo)
+{
+	printf("=== started dg thread ===\n");
+
+	uint32_t delay_ms = 1000;
+	printf("waiting %u ms\n", delay_ms);
+	dg_delay_ms(delay_ms);
+
+	printf("=== running some work ===\n");
+	some_work(1);
+
+	return 0;
+}
+
+void pre_start_thread_proc(struct dg_thrd_data_s* ptinfo)
+{
+	printf("pre_start_thread_proc() called with info 0x%p\n", ptinfo);
+}
+
+void post_thread_proc(struct dg_thrd_data_s* ptinfo)
+{
+	printf("post_thread_proc() called with info 0x%p\n", ptinfo);
+}
+
+bool init_thread_subsystem();
+
+bool test_threads()
+{
+	int result;
+	if (!init_thread_subsystem()) {
+		printf("init_thread_subsystem() failed!\n");
+		return false;
+	}
+
+	dg_thrd_data_t* pthread_data = dg_get_curr_thread_data();
+	if (pthread_data) {
+		printf("dg_get_curr_thread_data() unexpected behaviour! returned address 0x%p. Must be NULL\n",
+			pthread_data);
+		return false;
+	}
+
+	dg_thread_init_info_t thread_init_info = {
+		.affinity=DGT_AUTO_AFFINITY,
+		.flags=DGTF_USE_LINALLOC,
+		.linalloc_size=1024,
+		.priority=DGPRIOR_LOW,
+		.pthread_end_routine = post_thread_proc,
+		.pthread_pre_routine = pre_start_thread_proc,
+		.pthread_start_routine = thread_proc,
+		.puserptr=(void*)1000,
+		.stack_size=0
+	};
+
+	dg_thrd_t hthread = dg_thread_create_ex(&thread_init_info);
+	if (!hthread) {
+		printf("dg_thread_create_ex() failed!\n");
+		return false;
+	}
+
+	result = dg_thread_join_timed(hthread, 500);
+	if (result != DGERR_TIMEOUT) {
+		printf("dg_thread_join_timed() must be returned %d but returned %d\n", DGERR_TIMEOUT, result);
+		return false;
+	}
+
+	result = dg_thread_join(hthread);
+	if (result != DGERR_SUCCESS) {
+		printf("dg_thread_join() must be return status %d but returned %d\n", DGERR_SUCCESS, result);
+		return false;
+	}
+
+	/* alloc information for current system thread */
+	dg_thrd_data_t* pnewattacheddata = dg_thread_attach_info(DGTF_NONE, 1024);
+	if (!pnewattacheddata) {
+		printf("dg_thread_attach_info() returned NULL\n");
+		return false;
+	}
+
+	dg_thrd_data_t *pcurrthreaddata = dg_get_curr_thread_data();
+	if (pnewattacheddata != pcurrthreaddata) {
+		printf("dg_get_curr_thread_data() returned different information block! Returned 0x%p  must be: 0x%p\n",
+			pcurrthreaddata, pnewattacheddata);
+		return false;
+	}
+	return true;
+}
+
+void task_start_proc(struct dg_task_s* ptask)
+{
+	printf("task_start_proc() called! number: %zd\n", (size_t)ptask->puserdata);
+	some_work(5);
+}
+
+void task_skip_proc(struct dg_task_s* ptask, int taskterm_reason)
+{
+	printf("task_skip_proc() called! Termination reason: %d\n", taskterm_reason);
+}
+
+bool test_threadpool()
+{
+	int             status;
+	dg_threadpool_t threadpool;
+
+	if (!init_thread_subsystem()) {
+		printf("init_thread_subsystem() failed!\n");
+		return false;
+	}
+
+	status = tp_init(&threadpool, 2);
+	if (status != DGERR_SUCCESS) {
+		printf("threadpool_init() failed with status %d\n", status);
+		return false;
+	}
+
+	for (size_t i = 0; i < 512; i++) {
+		status = tp_task_add(&threadpool, task_start_proc, task_skip_proc, DGTASKPRIOR_MIDDLE, (void*)i, 0.);
+		if (status != DGERR_SUCCESS) {
+			printf("tp_task_add() failed with status %d\n", status);
+			return false;
+		}
+	}
+	tp_deinit(&threadpool);
+	return true;
+}
 
 #define RUN_TEST(func, failmsg) do {\
 	if(!func()) {\
@@ -333,7 +502,10 @@ int main()
 	//RUN_TEST(test_list, "list testing failed!")
 	//RUN_TEST(test_queues, "queues testing failed!")
 	//RUN_TEST(test_cpuinfo, "cpuinfo testing failed!")
-	RUN_TEST(test_handles, "cpuinfo testing failed!")
+	//RUN_TEST(test_handles, "cpuinfo testing failed!")
+	//RUN_TEST(test_bitvec, "bitvec testing failed!")
+	//RUN_TEST(test_threads, "threads testing failed!")
+	RUN_TEST(test_threadpool, "threads pool testing failed!")
 
 	return 0;
 }

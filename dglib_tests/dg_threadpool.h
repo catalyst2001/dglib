@@ -65,9 +65,10 @@ typedef struct dg_task_s {
 * @brief Threadpool structure
 */
 typedef struct dg_threadpool_s {
-	atomic_size_t status;
-	dg_darray_t   workers; /*< workers dynamic array */
-	dg_mtqueue_t  tasks; /*< thread safe tasks queue */
+	atomic_size_t  status;
+	dg_darray_t    workers; /*< workers dynamic array */
+	dg_mtqueue_t   tasks; /*< thread safe tasks queue */
+	dg_semaphore_t pfinish_sem;
 } dg_threadpool_t;
 
 /**
@@ -79,7 +80,7 @@ typedef struct dg_threadpool_s {
 * @return DGERR_OUT_OF_MEMORY if no enough RAM space
 * @return DGERR_UNKNOWN_ERROR if ocurred internal platform error
 */
-int threadpool_init(dg_threadpool_t *ptp, size_t num_threads);
+int tp_init(dg_threadpool_t *ptp, size_t num_threads);
 
 /**
 * @brief Clears the job queue and waits for worker threads to complete.
@@ -88,7 +89,7 @@ int threadpool_init(dg_threadpool_t *ptp, size_t num_threads);
 * @return DGERR_SUCCESS if operation sucessfully completed
 * @return DGERR_UNKNOWN_ERROR if ocurred internal platform error
 */
-int threadpool_discard(dg_threadpool_t* ptp);
+int tp_discard(dg_threadpool_t* ptp);
 
 /**
 * @brief Clears the job queue and waits for worker threads to complete.
@@ -97,7 +98,7 @@ int threadpool_discard(dg_threadpool_t* ptp);
 * @return DGERR_SUCCESS if operation sucessfully completed
 * @return DGERR_UNKNOWN_ERROR if ocurred internal platform error
 */
-int threadpool_task_add(dg_threadpool_t* ptp, 
+int tp_task_add(dg_threadpool_t* ptp, 
 	dg_task_start_proc ptaskexec,
 	dg_task_skip_proc ptaskskip,
 	uint32_t task_priority,
@@ -105,7 +106,7 @@ int threadpool_task_add(dg_threadpool_t* ptp,
 	double timeout);
 
 
-int threadpool_join(dg_threadpool_t* ptp);
+int tp_join(dg_threadpool_t* ptp);
 
 
-int threadpool_deinit(dg_threadpool_t* ptp);
+int tp_deinit(dg_threadpool_t* ptp);

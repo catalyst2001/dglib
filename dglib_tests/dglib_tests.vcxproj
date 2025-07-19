@@ -140,6 +140,7 @@
     <ClCompile Include="dg_sync.c" />
     <ClCompile Include="dg_thread.c" />
     <ClCompile Include="dg_threadpool.c" />
+    <ClCompile Include="dg_time.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
@@ -157,6 +158,7 @@
     <ClInclude Include="dg_sync.h" />
     <ClInclude Include="dg_thread.h" />
     <ClInclude Include="dg_threadpool.h" />
+    <ClInclude Include="dg_time.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

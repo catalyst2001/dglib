@@ -1,4 +1,6 @@
 #include "dg_cpuinfo.h"
+#include "dg_time.h"
+#include "dg_thread.h"
 #include <intrin.h>
 
 int cpu_get_info(dg_cpu_info_t* pdst)
@@ -55,5 +57,38 @@ int cpu_get_info(dg_cpu_info_t* pdst)
   else {
     pdst->num_physical_processors = pdst->num_logical_processors;
   }
+  return DGERR_SUCCESS;
+}
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
+
+int cpu_get_current_frequency_ex(double* pdst_freq_hz)
+{
+#ifdef _WIN32
+  /* restrict changing affinity! manual set */
+  DWORD_PTR affinity = 1;
+  DWORD_PTR old_affinity = SetThreadAffinityMask(GetCurrentThread(), affinity);
+#endif
+  uint64_t perf_freq = dg_get_perf_frequency();
+  uint64_t perf_start = dg_get_perf_counter();
+  uint64_t perf_end;
+  uint64_t cycles_start;
+  uint64_t cycles_end;
+  uint64_t cycles_diff;
+  double   elapsed_sec;
+
+  cycles_start = __rdtsc();
+  dg_delay_ms(100);
+  perf_end = dg_get_perf_counter();
+  cycles_end = __rdtsc();
+  elapsed_sec = ((double)(perf_end - perf_start) / ((double)perf_freq));
+  cycles_diff = cycles_end - cycles_start;
+  *pdst_freq_hz = cycles_diff / elapsed_sec;
+#ifdef _WIN32
+  SetThreadAffinityMask(GetCurrentThread(), old_affinity);
+#endif
   return DGERR_SUCCESS;
 }

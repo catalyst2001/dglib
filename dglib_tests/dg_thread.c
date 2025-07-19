@@ -6,7 +6,7 @@
 * @brief allocate new internal dglib thread data
 * 
 */ 
-inline dg_thrd_data_t* thread_internal_new_data(const dg_thread_init_info_t* pthreadinfo)
+dg_thrd_data_t* thread_internal_new_data(const dg_thread_init_info_t* pthreadinfo)
 {
 	dg_thrd_data_t* pthrd_data = DG_NEW(dg_thrd_data_t);
 	if (!pthrd_data) {
@@ -206,6 +206,45 @@ int dg_thread_get_exit_code(int* pdst, dg_thrd_t hthread)
 	}
 	*pdst = (int)return_code;
 	return DGERR_SUCCESS;
+}
+
+void dg_delay_ms(uint32_t delay)
+{
+	Sleep((DWORD)delay);
+}
+
+dg_thrd_data_t* dg_thread_attach_info(uint32_t flags, size_t linalloc_size)
+{
+	DWORD dwerror;
+	/* try to get current thread allocated info block */
+	dg_thrd_data_t* pthread_data = dg_get_curr_thread_data();
+	if (pthread_data)
+		return pthread_data;
+
+	/* try to alloc new block and fill by defaults */
+	dg_thread_init_info_t thread_new_info = {
+		.affinity = DGT_AUTO_AFFINITY,
+		.flags = flags,
+		.linalloc_size = linalloc_size,
+		.priority = DGPRIOR_DEFAULT,
+		.pthread_end_routine = NULL,
+		.pthread_pre_routine = NULL,
+		.pthread_start_routine = NULL,
+		.stack_size = 0,
+		.puserptr = NULL
+	};
+	/* try to alloc info */
+	pthread_data = thread_internal_new_data(&thread_new_info);
+	if (!pthread_data)
+		return NULL;
+
+	if (!TlsSetValue(dg_threadsys_tls_index, pthread_data)) {
+		dwerror = GetLastError();
+		DG_ERROR("TlsSetValue() failed! GetLastError()=%d (0x%x)", dwerror, dwerror);
+		free(pthread_data);
+		return NULL;
+	}
+	return pthread_data;
 }
 
 #else

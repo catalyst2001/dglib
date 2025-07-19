@@ -136,3 +136,7 @@ int dg_thread_join_timed(dg_thrd_t hthread, uint32_t timeout);
 * @return Otherwise, DGERR_SUCCESS is returned.
 */
 int dg_thread_get_exit_code(int* pdst, dg_thrd_t hthread);
+
+void dg_delay_ms(uint32_t delay);
+
+dg_thrd_data_t* dg_thread_attach_info(uint32_t flags, size_t linalloc_size);

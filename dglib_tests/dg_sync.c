@@ -79,13 +79,16 @@ void cond_free(dg_cond_t hcond)
 
 dg_semaphore_t semaphore_alloc(int initial_value, int max_count, const char* pname)
 {
+  DWORD dwerror;
   if (max_count == -1)
-    max_count = INFINITE;
+    max_count = LONG_MAX;
 
   HANDLE hsem = CreateSemaphoreA(NULL, (LONG)initial_value, (LONG)max_count, NULL);
-  if (hsem == NULL)
+  if (hsem == NULL) {
+    dwerror = GetLastError();
+    DG_ERROR("CreateSemaphoreA() failed! GetLastError()=%d (0x%x)", dwerror, dwerror);
     return NULL;
-
+  }
   return (dg_semaphore_t)hsem;
 }
 

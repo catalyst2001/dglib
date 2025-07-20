@@ -1,6 +1,7 @@
 ﻿#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include "dg_darray.h"
 #include "dg_list.h"
 #include "dg_queue.h"
@@ -492,6 +493,10 @@ bool test_threadpool()
 	tp_deinit(&threadpool);
 	return true;
 }
+bool test_strings()
+{
+	return true;
+}
 
 #define RUN_TEST(func, failmsg) do {\
 	if(!func()) {\
@@ -511,7 +516,10 @@ int main()
 	//RUN_TEST(test_handles, "cpuinfo testing failed!")
 	//RUN_TEST(test_bitvec, "bitvec testing failed!")
 	//RUN_TEST(test_threads, "threads testing failed!")
-	RUN_TEST(test_threadpool, "threads pool testing failed!")
+	//RUN_TEST(test_threadpool, "threads pool testing failed!")
+	RUN_TEST(test_strings, "string testing failed!")
+
+
 
 	return 0;
 }

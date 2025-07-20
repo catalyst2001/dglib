@@ -11,6 +11,7 @@
 #include "dg_bitvec.h"
 #include "dg_thread.h"
 #include "dg_threadpool.h"
+#include "dg_string.h"
 
 #define DG_MEMNOVERRIDE
 #include "dg_alloc.h"
@@ -495,6 +496,9 @@ bool test_threadpool()
 }
 bool test_strings()
 {
+	dg_string_t string = string_init_static("");
+
+
 	return true;
 }
 

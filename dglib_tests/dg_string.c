@@ -26,7 +26,7 @@ size_t str_length(const char* pstr)
   return len;
 }
 
-char* str_duplicate_string(size_t* pdstlen, const char* psrc)
+char* str_duplicate(size_t* pdstlen, const char* psrc)
 {
   char*  pstr;
   size_t length = str_length(psrc);
@@ -42,6 +42,13 @@ char* str_duplicate_string(size_t* pdstlen, const char* psrc)
 
   str_copy(pstr, length, psrc);
   return pstr;
+}
+
+void str_free(char* pdupstr)
+{
+  if (pdupstr) {
+    free(pdupstr);
+  }
 }
 
 char* str_to_lower(char* pstr)
@@ -64,17 +71,151 @@ char* str_to_upper(char* pstr)
   return pstr;
 }
 
+size_t str_remove_char(char* pstr, int chr)
+{
+  size_t len_to_move;
+  size_t len = str_length(pstr);
+  size_t src_len = len;
+  if (len) {
+    for (size_t i = 0; pstr[i] && i < len; i++) {
+      if (pstr[i] == chr) {
+        len_to_move = len - i;
+        mem_move(&pstr[i], &pstr[i + 1], len_to_move);
+        i = 0;
+        len--;
+      }
+    }
+    return src_len - len;
+  }
+  return 0;
+}
+
+size_t str_replace_char(char* pstr, int chr, int rep)
+{
+  size_t nreps = 0;
+  for (size_t i = 0; pstr[i]; i++) {
+    if (pstr[i]== chr) {
+      pstr[i] = rep;
+      nreps++;
+    }
+  }
+  return nreps;
+}
+
+char* str_contains(const char* pstr, const char* pfrag)
+{
+  return nullptr;
+}
+
+char* str_find_char(const char* pstr, int chr)
+{
+  return nullptr;
+}
+
+char* str_rfind_char(const char* pstr, int chr)
+{
+  return nullptr;
+}
+
+size_t str_replace_string(char* pstr, 
+  size_t maxlen, 
+  const char* pfrag, 
+  const char* prep)
+{
+  return size_t();
+}
+
+bool str_is_numeric(const char* pstr)
+{
+  for (size_t i = 0; pstr[i]; i++)
+    if (!CHR_IS_NUMERIC(pstr[i]))
+      return false;
+
+  return true;
+}
+
+bool str_is_alpha(const char* pstr)
+{
+  for (size_t i = 0; pstr[i]; i++)
+    if (!CHR_IS_ALPHA(pstr[i]))
+      return false;
+
+  return true;
+}
+
+size_t str_split(char* pdst[], 
+  const char* psrc,
+  size_t nsplits,
+  size_t maxlen,
+  const char* pdelim)
+{
+  size_t isplit = 0;
+  size_t delim_len = str_length(pdelim);
+  size_t srclen = str_length(psrc);
+  char* ptr = psrc;
+  char* pend = ptr + srclen;
+  do {
+    ptr = str_contains(ptr, pdelim);
+    if (ptr) {
+      str_copy(pdst[isplit], maxlen, ptr);
+      ptr += delim_len;
+      if (ptr > pend) {
+        ptr = pend;
+      }
+    }
+  } while (ptr);
+  return isplit;
+}
+
+void* mem_copy(void* pdst, const void* psrc, size_t count)
+{
+  char* pcdst = (char*)pdst;
+  char* pcsrc = (char*)psrc;
+  for (size_t i = 0; i < count; i++)
+    pcdst[i] = pcsrc[i];
+
+  return pdst;
+}
+
+void* mem_move(void* pdst, const void* psrc, size_t count)
+{
+  size_t i;
+  char* pcdst = (char*)pdst;
+  char* pcsrc = (char*)psrc;
+  if (pcdst < pcsrc) {
+    for (i = 0; i < count; i++) {
+      pcdst[i] = pcsrc[i];
+    }
+  }
+  else {
+    for (i = count; i > 0; i--) {
+      pcdst[i-1] = pcsrc[i-1];
+    }
+  }
+  return pdst;
+}
+
 bool string_copy_from(dg_string_t* pdst, const char* pstring)
 {
-  pdst->pstring = str_duplicate_string(&pdst->length, pstring);
+  pdst->pstring = str_duplicate(&pdst->length, pstring);
   return pdst->pstring != NULL;
 }
 
 bool string_copy(dg_string_t* pdst, const dg_string_t* psrc)
 {
   pdst->length = psrc->length;
-  pdst->pstring = str_duplicate_string(NULL, psrc->pstring);
+  pdst->pstring = str_duplicate(NULL, psrc->pstring);
   return pdst->pstring != NULL;
+}
+
+bool string_insert_from(dg_string_t* pdst, size_t from, const char* psrc)
+{
+  return false;
+}
+
+bool string_remove_chars(dg_string_t* pdst, int chr)
+{
+  return false;
 }
 
 void string_free(dg_string_t* pdst)

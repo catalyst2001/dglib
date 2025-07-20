@@ -452,7 +452,7 @@ bool test_threads()
 void task_start_proc(struct dg_task_s* ptask)
 {
 	printf("task_start_proc() called! number: %zd\n", (size_t)ptask->puserdata);
-	some_work(5);
+	some_work(1);
 }
 
 void task_skip_proc(struct dg_task_s* ptask, int taskterm_reason)
@@ -470,19 +470,25 @@ bool test_threadpool()
 		return false;
 	}
 
-	status = tp_init(&threadpool, 2);
+	status = tp_init(&threadpool, 16);
 	if (status != DGERR_SUCCESS) {
 		printf("threadpool_init() failed with status %d\n", status);
 		return false;
 	}
 
-	for (size_t i = 0; i < 512; i++) {
+	for (size_t i = 0; i < 16; i++) {
+		printf("adding task...\n");
+		//Sleep(100);
+		//getchar();
 		status = tp_task_add(&threadpool, task_start_proc, task_skip_proc, DGTASKPRIOR_MIDDLE, (void*)i, 0.);
 		if (status != DGERR_SUCCESS) {
 			printf("tp_task_add() failed with status %d\n", status);
-			return false;
+			continue;
 		}
 	}
+	
+	printf("wait for finishing...\n");
+	getchar();
 	tp_deinit(&threadpool);
 	return true;
 }

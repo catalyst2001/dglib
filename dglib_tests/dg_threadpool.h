@@ -83,18 +83,23 @@ typedef struct dg_threadpool_s {
 int tp_init(dg_threadpool_t *ptp, size_t num_threads);
 
 /**
-* @brief Clears the job queue and waits for worker threads to complete.
+* @brief Adds special tasks to the general queue to complete worker threads.
+* @note  This function may block the calling thread if the queue is full.
 * 
 * @param ptp - address of thread pool structure
-* @return DGERR_SUCCESS if operation sucessfully completed
-* @return DGERR_UNKNOWN_ERROR if ocurred internal platform error
+* @return nothing
 */
-int tp_discard(dg_threadpool_t* ptp);
+void tp_stop(dg_threadpool_t* ptp);
 
 /**
-* @brief Clears the job queue and waits for worker threads to complete.
+* @brief Adds a task to a shared queue with a specified execution priority
 *
 * @param ptp - address of thread pool structure
+* @param ptaskexec - the address of the procedure that the worker thread will begin executing. This value should never be NULL in normal mode, since its presence means that the worker thread will terminate!
+* @param ptaskskip - address of the procedure that is called if the task was canceled. The reason for termination is indicated
+* @param task_priority - Priority described by enumeration DGTASKPRIOR. Currently ignored!
+* @param puserdata - address of user data to be transferred to the task execution procedure
+* @param timeout - Task timeout. Ñurrently ignored!
 * @return DGERR_SUCCESS if operation sucessfully completed
 * @return DGERR_UNKNOWN_ERROR if ocurred internal platform error
 */
@@ -105,8 +110,18 @@ int tp_task_add(dg_threadpool_t* ptp,
 	void *puserdata,
 	double timeout);
 
+/**
+* @brief Waits for all worker threads to complete
+* 
+* @param ptp - address of thread pool structure
+* @return nothing
+*/
+void tp_join(dg_threadpool_t* ptp);
 
-int tp_join(dg_threadpool_t* ptp);
-
-
+/**
+* @brief Terminates the thread pool
+* 
+* @param ptp - address of thread pool structure
+* @return DGERR_SUCCESS if operation sucessfully completed
+*/
 int tp_deinit(dg_threadpool_t* ptp);

@@ -5,15 +5,20 @@
 
 int thread_pool_workers_entry(struct dg_thrd_data_s* ptinfo)
 {
+  printf("thread_pool_workers_entry(): thread %d from pool started\n", dg_get_curr_thread_id());
   dg_worker_t* pworker = (dg_worker_t*)ptinfo->puserdata;
   dg_threadpool_t* pthreadpool = pworker->ptpool;
-  setjmp(pworker->start_context);//TODO: K.D. user this later
+  setjmp(pworker->start_context);//TODO: K.D. use this later
   while (dg_atomic_load(&pthreadpool->status) == DGTPSTATUS_RUNNING) {
     printf("thread_pool_workers_entry() thread %u start execution\n", dg_get_curr_thread_id());
-    dg_task_t *ptask = (dg_task_t*)mtqueue_get_front(&pthreadpool->tasks); //TODO: K.D. mtqueue_get_front() call blocking this thread???
+    dg_task_t *ptask = (dg_task_t*)mtqueue_get_front(&pthreadpool->tasks);
     ptask->pworker = pworker;
-    ptask->tstart = 0.; //TODO: K.D. user this later
-    assert(ptask->ptaskproc && "ptask->ptaskproc is NULL!");
+    ptask->tstart = 0.; //TODO: K.D. use this later
+
+    /* check special termination marker in task */
+    if (!ptask->ptaskproc)
+      break; //break cycle
+    
     ptask->ptaskproc(ptask);
   }
   semaphore_post(pthreadpool->pfinish_sem);
@@ -71,9 +76,19 @@ int tp_init(dg_threadpool_t* ptp, size_t num_threads)
   return DGERR_SUCCESS;
 }
 
-int tp_discard(dg_threadpool_t* ptp)
+void tp_stop(dg_threadpool_t* ptp)
 {
-  return 0;
+  dg_task_t termination_task = {
+    .ptaskproc = NULL, //special flag for termination
+    .puserdata = NULL,
+    .pworker = NULL,
+    .tlimit = 0., //TODO: K.D. use this later
+    .tstart = 0.  //TODO: K.D. use this later
+  };
+
+  dg_atomic_store(&ptp->status, DGTPSTATUS_TERMINATE);
+  for (size_t i = 0; i < darray_get_size(&ptp->workers); i++)
+    mtqueue_add_back(&ptp->tasks, &termination_task);
 }
 
 int tp_task_add(dg_threadpool_t* ptp, 
@@ -87,8 +102,8 @@ int tp_task_add(dg_threadpool_t* ptp,
     .ptaskproc= ptaskexec,
     .puserdata= puserdata,
     .pworker=NULL,
-    .tlimit=0., //TODO: K.D. user this later
-    .tstart=0.  //TODO: K.D. user this later
+    .tlimit=0., //TODO: K.D. use this later
+    .tstart=0.  //TODO: K.D. use this later
   };
   
   if (!mtqueue_try_add_back(&ptp->tasks, &task)) {
@@ -98,24 +113,24 @@ int tp_task_add(dg_threadpool_t* ptp,
   return DGERR_SUCCESS;
 }
 
-int tp_join(dg_threadpool_t* ptp)
+void tp_join(dg_threadpool_t* ptp)
 {
   assert(ptp->pfinish_sem && "ptp->pfinish_sem is NULL");
   for (size_t i = 0; i < darray_get_size(&ptp->workers); i++)
     semaphore_wait(ptp->pfinish_sem);
-
-  return DGERR_SUCCESS;
 }
 
 int tp_deinit(dg_threadpool_t* ptp)
 {
   dg_worker_t* pworker;
-  dg_atomic_store(&ptp->status, DGTPSTATUS_TERMINATE);
+  tp_stop(ptp);
   tp_join(ptp);
-
   for (size_t i = 0; i < darray_get_size(&ptp->workers); i++) {
     pworker = darray_getptr(&ptp->workers, i, dg_worker_t);
     dg_thread_close(pworker->hthread);
   }
+  darray_free(&ptp->workers);
+  mtqueue_free(&ptp->tasks);
+  semaphore_free(ptp->pfinish_sem);
   return DGERR_SUCCESS;
 }

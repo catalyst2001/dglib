@@ -187,7 +187,7 @@ int dg_thread_join_timed(dg_thrd_t hthread, uint32_t timeout)
 		return DGERR_UNKNOWN_ERROR;
 	}
 	DG_ERROR("WaitForSingleObject() returned unexpected value! (%d)", result);
-	return DGERR_UNKNOWN_ERROR; //NOTE: K.D. fail? log this case
+	return DGERR_UNKNOWN_ERROR;
 }
 
 int dg_thread_get_exit_code(int* pdst, dg_thrd_t hthread)

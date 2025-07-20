@@ -226,8 +226,8 @@ bool mtqueue_alloc(dg_mtqueue_t* q, size_t elemsize, size_t capacity)
   q->tail = 0;
   q->head_mtx = mutex_alloc("dg_mtqueue_t:head_mtx");
   q->tail_mtx = mutex_alloc("dg_mtqueue_t:tail_mtx");
-  q->slots_sem = semaphore_alloc((int)capacity, -1, "dg_mtqueue_t:slots_sem");
-  q->items_sem = semaphore_alloc(0, -1, "dg_mtqueue_t:items_sem");
+  q->slots_sem = semaphore_alloc((int)capacity, (int)capacity, "dg_mtqueue_t:slots_sem");
+  q->items_sem = semaphore_alloc(0, (int)capacity, "dg_mtqueue_t:items_sem");
   return q->pdata && 
     q->head_mtx && 
     q->tail_mtx &&

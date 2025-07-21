@@ -104,25 +104,96 @@ size_t str_replace_char(char* pstr, int chr, int rep)
 
 char* str_contains(const char* pstr, const char* pfrag)
 {
-  return nullptr;
+  assert(pstr != NULL);
+  assert(pfrag != NULL);
+  if (*pfrag == '\0')
+    return pstr;
+
+  for (size_t i = 0; pstr[i] != '\0'; i++) {
+    size_t j = 0;
+    while (pfrag[j] != '\0' && pstr[i + j] != '\0' && pstr[i + j] == pfrag[j])
+      j++;
+    
+    if (pfrag[j] == '\0') {
+      return &pstr[i];
+    }
+  }
+  return NULL;
 }
 
 char* str_find_char(const char* pstr, int chr)
 {
-  return nullptr;
+  while (*pstr) {
+    if (*pstr == chr)
+      return pstr;
+
+    pstr++;
+  }
+  return NULL;
 }
 
 char* str_rfind_char(const char* pstr, int chr)
 {
-  return nullptr;
+  char* pend;
+  size_t len = str_length(pstr);
+  if (!len)
+    return NULL;
+
+  len++;
+  pend = pstr + len;
+  while (pend > pstr) {
+    if (*pend == chr) {
+      return pend;
+    }
+    pend--;
+  }
+  return NULL;
 }
 
-size_t str_replace_string(char* pstr, 
-  size_t maxlen, 
-  const char* pfrag, 
+/*
+ * Replaces all (non-overlapping) occurrences of pfrag in pstr with prep,
+ * without exceeding buffer size maxlen (including terminating '\0').
+ * Returns the new length of the string in pstr.
+ */
+size_t str_replace_string(char* pstr,
+  size_t maxlen,
+  const char* pfrag,
   const char* prep)
 {
-  return size_t();
+  if (!pstr || !pfrag || !prep)
+    return 0;
+
+  size_t len = strlen(pstr);
+  size_t len_frag = strlen(pfrag);
+  size_t len_rep = strlen(prep);
+
+  /* empty fragment => nothing to do */
+  if (len_frag == 0)
+    return len;
+
+  char* match = pstr;
+  while ((match = strstr(match, pfrag)) != NULL) {
+    size_t offset = match - pstr;
+    size_t new_len = len + len_rep - len_frag;
+
+    /* not enough room for this replacement + '\0' */
+    if (new_len + 1 > maxlen)
+      break;
+
+    /* shift the tail to its new position */
+    memmove(match + len_rep,
+      match + len_frag,
+      len - offset - len_frag + 1);  /* +1 to move the '\0' too */
+
+    /* copy replacement into place */
+    mem_copy(match, prep, len_rep);
+
+    /* update length and advance past the inserted text */
+    len = new_len;
+    match += len_rep;
+  }
+
+  return len;
 }
 
 bool str_is_numeric(const char* pstr)
@@ -171,6 +242,9 @@ void* mem_copy(void* pdst, const void* psrc, size_t count)
 {
   char* pcdst = (char*)pdst;
   char* pcsrc = (char*)psrc;
+  if (count == 0 || pdst == psrc)
+    return pdst;
+
   for (size_t i = 0; i < count; i++)
     pcdst[i] = pcsrc[i];
 
@@ -180,6 +254,9 @@ void* mem_copy(void* pdst, const void* psrc, size_t count)
 void* mem_move(void* pdst, const void* psrc, size_t count)
 {
   size_t i;
+  if (count == 0 || pdst == psrc)
+    return pdst;
+
   char* pcdst = (char*)pdst;
   char* pcsrc = (char*)psrc;
   if (pcdst < pcsrc) {
@@ -215,7 +292,9 @@ bool string_insert_from(dg_string_t* pdst, size_t from, const char* psrc)
 
 bool string_remove_chars(dg_string_t* pdst, int chr)
 {
-  return false;
+  size_t nremoved= str_remove_char(pdst->pstring, chr);
+  pdst->length -= nremoved;
+  return nremoved != 0;
 }
 
 void string_free(dg_string_t* pdst)

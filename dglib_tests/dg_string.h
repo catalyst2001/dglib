@@ -89,7 +89,7 @@ static inline char* str_trim_fast(char* str, size_t length) {
 	if (!length)
 		length = str_length(str);
 	char* pltrimmed = str_trim_left_fast(str);
-	assert(pltrimmed >= str && "trimmed address less source!");
+	assert(pltrimmed >= str && "trimmed address less source! size_t overflow!");
 	length -= (size_t)(pltrimmed - str);
 	return str_trim_right_fast(pltrimmed, length);
 }

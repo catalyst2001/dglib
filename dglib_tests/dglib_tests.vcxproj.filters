@@ -119,5 +119,8 @@
     <ClInclude Include="dg_string.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="dg_bswap.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

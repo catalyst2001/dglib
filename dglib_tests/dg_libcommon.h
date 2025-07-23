@@ -29,6 +29,10 @@ enum DGERR {
 #define DG_ALIGN_DOWN(x, a) (((x)/(a))*(a))
 #define DG_ALIGN_UP(x, a)   ((((x)+(a)-1)/(a))*(a))
 
+#define DG_CONST_STRLEN(name, str) enum { name=sizeof(str)-1 }
+
+#define DG_INRANGE(x, a, b) (x >= a && x <= b)
+
 /**
 * common declarations
 */

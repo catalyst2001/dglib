@@ -149,6 +149,7 @@
     <ClInclude Include="dg_alloc.h" />
     <ClInclude Include="dg_atomic.h" />
     <ClInclude Include="dg_bitvec.h" />
+    <ClInclude Include="dg_bswap.h" />
     <ClInclude Include="dg_cpuinfo.h" />
     <ClInclude Include="dg_dt.h" />
     <ClInclude Include="dg_handle.h" />

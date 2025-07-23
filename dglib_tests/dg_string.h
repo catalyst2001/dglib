@@ -30,40 +30,6 @@ typedef struct dg_string_s {
  || ((c) >= '{' && (c) <= '~')  /*  { | } ~ */                  \
 )
 
-/*
-* ========================================
-* STRING UTILITY
-* ========================================
-*/
-bool   str_copy(char *pdst, size_t maxlen, const char *psrc);
-size_t str_length(const char *pstr);
-char*  str_duplicate(size_t *pdstlen, const char *psrc);
-void   str_free(char* pdupstr);
-char*  str_to_lower(char* pstr);
-char*  str_to_upper(char* pstr);
-size_t str_remove_char(char *pstr, int chr);
-size_t str_replace_char(char* pstr, int chr, int rep);
-char*  str_contains(const char *pstr, const char *pfrag);
-char*  str_find_char(const char* pstr, int chr);
-char*  str_rfind_char(const char* pstr, int chr);
-size_t str_replace_string(char* pstr, 
-	size_t maxlen, 
-	const char *pfrag, 
-	const char *prep);
-
-bool str_is_numeric(const char *pstr);
-
-bool str_is_alpha(const char* pstr);
-
-size_t str_split(char *pdst[],
-	const char* psrc,
-	size_t nsplits, 
-	size_t maxlen, 	
-	const char *pdelim);
-
-void* mem_copy(void *pdst, const void *psrc, size_t count);
-void* mem_move(void* pdst, const void* psrc, size_t count);
-
 static inline char* str_trim_left_fast(char* str)
 {
 	while (*str && CHR_IS_SPACE(*str))
@@ -96,12 +62,63 @@ static inline char* str_trim_fast(char* str, size_t length) {
 
 /*
 * ========================================
+* STRING UTILITY
+* ========================================
+*/
+int    str_compare(const char* pstra, const char* pstrb, int casesensitive);
+bool   str_copy(char *pdst, size_t maxlen, const char *psrc);
+size_t str_length(const char *pstr);
+char*  str_duplicate(size_t *pdstlen, const char *psrc);
+void   str_free(char* pdupstr);
+char*  str_to_lower(char* pstr);
+char*  str_to_upper(char* pstr);
+size_t str_remove_char(char *pstr, int chr);
+size_t str_replace_char(char* pstr, int chr, int rep);
+char*  str_contains(const char *pstr, const char *pfrag, int casesensitive);
+char*  str_find_char(const char* pstr, int chr);
+char*  str_rfind_char(const char* pstr, int chr);
+size_t str_replace_string(char* pstr, 
+	size_t maxlen, 
+	const char *pfrag, 
+	const char *prep);
+bool str_is_numeric(const char *pstr);
+bool str_is_alpha(const char* pstr);
+size_t str_split(char *pdst[],
+	const char* psrc,
+	size_t nsplits, 
+	size_t maxlen, 	
+	const char *pdelim, int casesensitive);
+char* str_trim(char *pstr);
+size_t str_chrcount(size_t *pdst, size_t maxlen, const char *pstr, const char *psymsstr);
+void str_filter_bad_chars(char *pstr);
+
+enum STRD_TYPE {
+	STRD_HEXVAL=0,
+	STRD_BINVAL,
+	STRD_OCTVAL
+};
+const char* str_data(uint8_t *pdst, size_t maxlen, int strd_type, const char *psrc);
+uint8_t* str_sig(
+	const char* pstart,
+	const char* pend,
+	const char *psig, 
+	const char *pmask);
+int  chr_hex_tetrade(int sym);
+int  str_hex_byte(const char *phexbyte);
+
+void* mem_set(void* pdst, int value, size_t count);
+void* mem_copy(void *pdst, const void *psrc, size_t count);
+void* mem_move(void* pdst, const void* psrc, size_t count);
+int   mem_compare(const void *psrca, const void *psrcb, size_t count);
+
+/*
+* ========================================
 * STRING FUNCTIONS
 * ========================================
 */
 bool string_copy_from(dg_string_t *pdst, const char *pstring);
 bool string_copy(dg_string_t *pdst, const dg_string_t *psrc);
-bool string_append(dg_string_t* pdst, const char *pstring);
+bool string_append(dg_string_t* pdst, const char *pstring, size_t length);
 bool string_insert_from(dg_string_t* pdst, size_t from, const char *psrc);
 bool string_remove_chars(dg_string_t* pdst, int chr);
 void string_free(dg_string_t* pdst);

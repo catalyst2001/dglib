@@ -1,6 +1,14 @@
 #include "dg_string.h"
 #include "dg_alloc.h"
 
+//TODO: K.D. OPTIMIZE ALL STRING OPERATIONS
+// 1. mem_set dst memory must be aligned to int/size_t for fast fill
+
+int str_compare(const char* pstra, const char* pstrb, int casesensitive)
+{
+  return 0;
+}
+
 bool str_copy(char* pdst, size_t maxlen, const char* psrc)
 {
   size_t i;
@@ -102,7 +110,7 @@ size_t str_replace_char(char* pstr, int chr, int rep)
   return nreps;
 }
 
-char* str_contains(const char* pstr, const char* pfrag)
+char* str_contains(const char* pstr, const char* pfrag, int casesensitive)
 {
   assert(pstr != NULL);
   assert(pfrag != NULL);
@@ -218,7 +226,8 @@ size_t str_split(char* pdst[],
   const char* psrc,
   size_t nsplits,
   size_t maxlen,
-  const char* pdelim)
+  const char* pdelim,
+  int casesensitive)
 {
   size_t isplit = 0;
   size_t delim_len = str_length(pdelim);
@@ -226,7 +235,7 @@ size_t str_split(char* pdst[],
   char* ptr = psrc;
   char* pend = ptr + srclen;
   do {
-    ptr = str_contains(ptr, pdelim);
+    ptr = str_contains(ptr, pdelim, casesensitive);
     if (ptr) {
       str_copy(pdst[isplit], maxlen, ptr);
       ptr += delim_len;
@@ -236,6 +245,124 @@ size_t str_split(char* pdst[],
     }
   } while (ptr);
   return isplit;
+}
+
+char* str_trim(char* pstr)
+{
+  size_t len;
+  char* psrc = pstr;
+  if (!pstr || !pstr[0])
+    return pstr; //skip empty string
+
+  //TODO: K.D. optimize string length computation
+  pstr = str_trim_left_fast(pstr);
+  len = str_length(pstr);
+  pstr = str_trim_right_fast(pstr, len);
+  len = str_length(pstr);
+  if (psrc != pstr && len)
+    mem_move(psrc, pstr, len+1); //len+1 for copy '\0'
+  
+  return psrc;
+}
+
+size_t str_chrcount(size_t* pdst, 
+  size_t maxlen, 
+  const char* pstr, 
+  const char* psymsstr)
+{
+  size_t vcount = 0;
+  for (size_t i = 0; i < maxlen 
+    && psymsstr[i]; i++) {
+    pdst[i] = 0;
+    for (size_t j = 0; pstr[j]; j++) {
+      if (pstr[j] == psymsstr[i]) {
+        /* sym found */
+        pdst[i]++;
+      }
+    }
+
+    if (pdst[i]) {
+      vcount++;
+    }
+  }
+  return vcount;
+}
+
+void str_filter_bad_chars(char* pstr)
+{
+  //TODO: K.D. add other format specifiers here
+  str_remove_char(pstr, '%');
+}
+
+static inline int read_tetrade_inl(int sym)
+{
+  if (DG_INRANGE(sym, '0', '9'))
+    return sym - '0';
+
+  sym = CHR_TO_LOWER(sym);
+  if (DG_INRANGE(sym, 'a', 'f'))
+    return (sym - 'a')+10;
+  
+  return -1;
+}
+
+static inline int read_hex_byte_inl(const char* pbyte)
+{
+  int low = read_tetrade_inl(pbyte[0]);
+  int high = read_tetrade_inl(pbyte[1]);
+  return (low << 4) | high;
+}
+
+const char* str_data(uint8_t* pdst, size_t maxlen, int strd_type, const char* psrc)
+{
+#define BINPREFIX "0b"
+  DG_CONST_STRLEN(BINPREF_LENGTH, BINPREFIX);
+  const char* pstarthex = str_contains(psrc, BINPREFIX, 0);
+  if (!pstarthex)
+    return psrc; //bin pref not found, return src address
+
+  /* found bin prefix */
+  pstarthex += BINPREF_LENGTH;
+
+  //TODO: K.D. CONTINUE
+
+}
+
+uint8_t* str_sig(const char* pstart,
+  const char* pend, 
+  const char* psig, 
+  const char* pmask)
+{
+  for (const char *paddr = pstart; paddr < pend; paddr++) {
+    for (size_t i = 0; pmask[i]; i++) {
+      if (pmask[i] != '?' && psig[i] != paddr[i]) {
+        /* not found */
+        break;
+      }
+    }
+    /* found */
+    return paddr;
+  }
+  return NULL;
+}
+
+int chr_hex_tetrade(int sym)
+{
+  return read_tetrade_inl(sym);
+}
+
+int str_hex_byte(const char* phexbyte)
+{
+  return read_hex_byte_inl(phexbyte);
+}
+
+void* mem_set(void* pdst, int value, size_t count)
+{
+  char* pbdst = (char*)pdst;
+  for (size_t i = 0; i < count; i++)
+    pbdst[i] = 0;
+
+  return pdst;
 }
 
 void* mem_copy(void* pdst, const void* psrc, size_t count)
@@ -272,6 +399,19 @@ void* mem_move(void* pdst, const void* psrc, size_t count)
   return pdst;
 }
 
+int mem_compare(const void* psrca, const void* psrcb, size_t count)
+{
+  char* pbsrca = (char*)psrca;
+  char* pbsrcb = (char*)psrcb;
+  while (count--) {
+    if (*pbsrca != *pbsrcb) {
+      return *pbsrca - *pbsrcb;
+    }
+    pbsrca++, pbsrcb++;
+  }
+  return 0;
+}
+
 bool string_copy_from(dg_string_t* pdst, const char* pstring)
 {
   pdst->pstring = str_duplicate(&pdst->length, pstring);
@@ -285,14 +425,27 @@ bool string_copy(dg_string_t* pdst, const dg_string_t* psrc)
   return pdst->pstring != NULL;
 }
 
-bool string_insert_from(dg_string_t* pdst, size_t from, const char* psrc)
+bool string_append(
+  dg_string_t* pdst, 
+  const char* pstring, 
+  size_t length)
+{
+
+
+
+  return false;
+}
+
+bool string_insert_from(dg_string_t* pdst, 
+  size_t from, 
+  const char* psrc)
 {
   return false;
 }
 
 bool string_remove_chars(dg_string_t* pdst, int chr)
 {
-  size_t nremoved= str_remove_char(pdst->pstring, chr);
+  size_t nremoved = str_remove_char(pdst->pstring, chr);
   pdst->length -= nremoved;
   return nremoved != 0;
 }

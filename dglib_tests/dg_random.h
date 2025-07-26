@@ -17,9 +17,9 @@ typedef struct dg_mt19937_s {
 	int mti; /*< mti==N+1 means mt[N] is not initialized */
 } dg_mt19937_t;
 
-void mt19937_init(dg_mt19937_t *pdstctx, unsigned long seed);
-void mt19937_init_by_array(dg_mt19937_t * pdstctx, unsigned long init_key[], int key_length);
-unsigned long mt19937_genrand_int32(dg_mt19937_t* pctx);
+DG_API void mt19937_init(dg_mt19937_t *pdstctx, unsigned long seed);
+DG_API void mt19937_init_by_array(dg_mt19937_t * pdstctx, unsigned long init_key[], int key_length);
+DG_API unsigned long mt19937_genrand_int32(dg_mt19937_t* pctx);
 
 static inline long mt19937_genrand_int31(dg_mt19937_t* pctx) {
 	return (long)(mt19937_genrand_int32(pctx) >> 1);

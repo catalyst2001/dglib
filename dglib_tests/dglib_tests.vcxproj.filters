@@ -66,6 +66,15 @@
     <ClCompile Include="dg_string.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="dg_random.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="dg_path.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="dg_filesystem.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dg_darray.h">
@@ -122,5 +131,17 @@
     <ClInclude Include="dg_bswap.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="dg_random.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="dg_path.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="dg_filesystem.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

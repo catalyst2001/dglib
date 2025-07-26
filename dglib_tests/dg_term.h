@@ -18,11 +18,11 @@ typedef struct dg_tevent_s {
 
 typedef void (*thandler)(dg_tevent_t *pevent);
 
-thandler term_get_handler();
-void     term_set_handler(thandler pproc);
-int      term_open(bool with_in);
-bool     term_exists();
-int      term_close();
-int      term_set_title(const char *psrc);
-int      term_get_title(char* pdst, size_t maxlen);
-int      term_update();
+DG_API thandler term_get_handler();
+DG_API void     term_set_handler(thandler pproc);
+DG_API int      term_open(bool with_in);
+DG_API bool     term_exists();
+DG_API int      term_close();
+DG_API int      term_set_title(const char *psrc);
+DG_API int      term_get_title(char* pdst, size_t maxlen);
+DG_API int      term_update();

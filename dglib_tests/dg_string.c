@@ -1,460 +1,513 @@
 #include "dg_string.h"
 #include "dg_alloc.h"
 
-//TODO: K.D. OPTIMIZE ALL STRING OPERATIONS
-// 1. mem_set dst memory must be aligned to int/size_t for fast fill
+int str_compare(const char* a, const char* b, int casesensitive) {
+	if (!casesensitive) {
+		while (*a && *b) {
+			unsigned char ca = (unsigned char)*a++;
+			unsigned char cb = (unsigned char)*b++;
+			if (CHR_IS_UPPER(ca))
+				ca = CHR_TO_LOWER(ca);
 
-int str_compare(const char* pstra, const char* pstrb, int casesensitive)
-{
-  return 0;
+			if (CHR_IS_UPPER(cb))
+				cb = CHR_TO_LOWER(cb);
+
+			if (ca != cb)
+				return (int)ca - (int)cb;
+		}
+		return (int)*a - (int)*b;
+	}
+	else {
+		while (*a && *a == *b) {
+			a++;
+			b++;
+		}
+		return (int)(unsigned char)*a - (int)(unsigned char)*b;
+	}
 }
 
-bool str_copy(char* pdst, size_t maxlen, const char* psrc)
-{
-  size_t i;
-  for (i = 0; psrc[i] && i < maxlen; i++)
-    pdst[i] = psrc[i];
+bool str_copy(char* dst, size_t maxlen, const char* src) {
+	if (!dst || !src || maxlen == 0)
+		return false;
 
-  if (i < maxlen) {
-    pdst[i] = psrc[i];
-    return true;
-  }
+	size_t i = 0;
+	for (; i < maxlen && src[i]; i++)
+		dst[i] = src[i];
 
-  /* clamp */
-  pdst[i - 1] = '\0';
-  return false;
+	if (i < maxlen) {
+		dst[i] = '\0';
+		return true;
+	}
+	dst[maxlen - 1] = '\0';
+	return false;
 }
 
-size_t str_length(const char* pstr)
+size_t str_length(const char* str)
 {
-  size_t len = 0;
-  while (*pstr++)
-    len++;
+	const char* s = str;
+	while (*s)
+		s++;
 
-  return len;
+	return (size_t)(s - str);
 }
 
-char* str_duplicate(size_t* pdstlen, const char* psrc)
-{
-  char*  pstr;
-  size_t length = str_length(psrc);
-  if (!length)
-    return NULL;
+char* str_duplicate(size_t* dstlen, const char* src) {
+	if (!src)
+		return NULL;
 
-  pstr = malloc(length+1);
-  if (!pstr)
-    return NULL;
+	size_t len = str_length(src);
+	char* dup = (char*)malloc(len + 1);
+	if (!dup)
+		return NULL;
 
-  if (pdstlen)
-    *pdstlen = length;
+	for (size_t i = 0; i < len; i++)
+		dup[i] = src[i];
 
-  str_copy(pstr, length, psrc);
-  return pstr;
+	dup[len] = '\0';
+	if (dstlen)
+		*dstlen = len;
+
+	return dup;
 }
 
-void str_free(char* pdupstr)
+void str_free(char* s)
 {
-  if (pdupstr) {
-    free(pdupstr);
-  }
+	if (s)
+		free(s);
 }
 
-char* str_to_lower(char* pstr)
+char* str_to_lower(char* s)
 {
-  char* psrc = pstr;
-  while (*psrc++)
-    if (CHR_IS_UPPER(*psrc))
-      *psrc = CHR_TO_LOWER(*psrc);
+	for (char* p = s; *p; p++)
+		if (CHR_IS_UPPER((unsigned char)*p))
+			*p = CHR_TO_LOWER((unsigned char)*p);
 
-  return pstr;
+	return s;
 }
 
-char* str_to_upper(char* pstr)
+char* str_to_upper(char* s)
 {
-  char* psrc = pstr;
-  while (*psrc++)
-    if (CHR_IS_LOWER(*psrc))
-      *psrc = CHR_TO_UPPER(*psrc);
+	for (char* p = s; *p; p++)
+		if (CHR_IS_LOWER((unsigned char)*p))
+			*p = CHR_TO_UPPER((unsigned char)*p);
 
-  return pstr;
+	return s;
 }
 
-size_t str_remove_char(char* pstr, int chr)
-{
-  size_t len_to_move;
-  size_t len = str_length(pstr);
-  size_t src_len = len;
-  if (len) {
-    for (size_t i = 0; pstr[i] && i < len; i++) {
-      if (pstr[i] == chr) {
-        len_to_move = len - i;
-        mem_move(&pstr[i], &pstr[i + 1], len_to_move);
-        i = 0;
-        len--;
-      }
-    }
-    return src_len - len;
-  }
-  return 0;
+size_t str_remove_char(char* s, int chr) {
+	size_t write = 0, read = 0, len = 0;
+	while (s[read]) {
+		if (s[read] != chr) {
+			s[write++] = s[read];
+		}
+		else {
+			len++;
+		}
+		read++;
+	}
+	s[write] = '\0';
+	return len;
 }
 
-size_t str_replace_char(char* pstr, int chr, int rep)
+size_t str_replace_char(char* s, int chr, int rep)
 {
-  size_t nreps = 0;
-  for (size_t i = 0; pstr[i]; i++) {
-    if (pstr[i]== chr) {
-      pstr[i] = rep;
-      nreps++;
-    }
-  }
-  return nreps;
+	size_t cnt = 0;
+	for (size_t i = 0; s[i]; i++) {
+		if (s[i] == chr) {
+			s[i] = (char)rep;
+			cnt++;
+		}
+	}
+	return cnt;
 }
 
-char* str_contains(const char* pstr, const char* pfrag, int casesensitive)
+char* str_contains(const char* s, const char* frag, int casesensitive)
 {
-  assert(pstr != NULL);
-  assert(pfrag != NULL);
-  if (*pfrag == '\0')
-    return pstr;
+	if (!frag[0])
+		return (char*)s;
 
-  for (size_t i = 0; pstr[i] != '\0'; i++) {
-    size_t j = 0;
-    while (pfrag[j] != '\0' && pstr[i + j] != '\0' && pstr[i + j] == pfrag[j])
-      j++;
-    
-    if (pfrag[j] == '\0') {
-      return &pstr[i];
-    }
-  }
-  return NULL;
+	size_t fl = str_length(frag);
+	for (size_t i = 0; s[i]; i++) {
+		size_t j = 0;
+		for (; j < fl; j++) {
+			char cs = s[i + j]; char cf = frag[j];
+			if (!casesensitive) {
+				if (CHR_IS_UPPER((unsigned char)cs))
+					cs = CHR_TO_LOWER(cs);
+				if (CHR_IS_UPPER((unsigned char)cf))
+					cf = CHR_TO_LOWER(cf);
+			}
+
+			if (cs != cf)
+				break;
+		}
+		if (j == fl)
+			return (char*)&s[i];
+	}
+	return NULL;
 }
 
-char* str_find_char(const char* pstr, int chr)
+char* str_find_char(const char* s, int chr)
 {
-  while (*pstr) {
-    if (*pstr == chr)
-      return pstr;
+	for (; *s; s++)
+		if (*s == (char)chr)
+			return (char*)s;
 
-    pstr++;
-  }
-  return NULL;
+	return NULL;
 }
 
-char* str_rfind_char(const char* pstr, int chr)
+char* str_rfind_char(const char* s, int chr)
 {
-  char* pend;
-  size_t len = str_length(pstr);
-  if (!len)
-    return NULL;
+	const char* res = NULL;
+	for (size_t i = 0; s[i]; i++)
+		if (s[i] == (char)chr)
+			res = &s[i];
 
-  len++;
-  pend = pstr + len;
-  while (pend > pstr) {
-    if (*pend == chr) {
-      return pend;
-    }
-    pend--;
-  }
-  return NULL;
+	return (char*)res;
 }
 
-/*
- * Replaces all (non-overlapping) occurrences of pfrag in pstr with prep,
- * without exceeding buffer size maxlen (including terminating '\0').
- * Returns the new length of the string in pstr.
- */
-size_t str_replace_string(char* pstr,
-  size_t maxlen,
-  const char* pfrag,
-  const char* prep)
+size_t str_replace_string(char* s, size_t maxlen, const char* frag, const char* rep)
 {
-  if (!pstr || !pfrag || !prep)
-    return 0;
+	if (!s || !frag || !rep)
+		return 0;
+	size_t sl = str_length(s),
+		fl = str_length(frag),
+		rl = str_length(rep);
+	if (fl == 0)
+		return sl;
 
-  size_t len = strlen(pstr);
-  size_t len_frag = strlen(pfrag);
-  size_t len_rep = strlen(prep);
-
-  /* empty fragment => nothing to do */
-  if (len_frag == 0)
-    return len;
-
-  char* match = pstr;
-  while ((match = strstr(match, pfrag)) != NULL) {
-    size_t offset = match - pstr;
-    size_t new_len = len + len_rep - len_frag;
-
-    /* not enough room for this replacement + '\0' */
-    if (new_len + 1 > maxlen)
-      break;
-
-    /* shift the tail to its new position */
-    memmove(match + len_rep,
-      match + len_frag,
-      len - offset - len_frag + 1);  /* +1 to move the '\0' too */
-
-    /* copy replacement into place */
-    mem_copy(match, prep, len_rep);
-
-    /* update length and advance past the inserted text */
-    len = new_len;
-    match += len_rep;
-  }
-
-  return len;
+	char* p = s;
+	while ((p = str_contains(p, frag, 1))) {
+		size_t off = (size_t)(p - s);
+		size_t newl = sl - fl + rl;
+		if (newl + 1 > maxlen)
+			break;
+		mem_move(p + rl, p + fl, sl - off - fl + 1);
+		mem_copy(p, rep, rl);
+		sl = newl;
+		p += rl;
+	}
+	return sl;
 }
 
-bool str_is_numeric(const char* pstr)
+bool str_is_numeric(const char* s)
 {
-  for (size_t i = 0; pstr[i]; i++)
-    if (!CHR_IS_NUMERIC(pstr[i]))
-      return false;
-
-  return true;
+	for (size_t i = 0; s[i]; i++)
+		if (!CHR_IS_NUMERIC(s[i]))
+			return false;
+	return true;
 }
 
-bool str_is_alpha(const char* pstr)
+bool str_is_alpha(const char* s)
 {
-  for (size_t i = 0; pstr[i]; i++)
-    if (!CHR_IS_ALPHA(pstr[i]))
-      return false;
+	for (size_t i = 0; s[i]; i++)
+		if (!CHR_IS_ALPHA(s[i]))
+			return false;
 
-  return true;
+	return true;
 }
 
-size_t str_split(char* pdst[], 
-  const char* psrc,
-  size_t nsplits,
-  size_t maxlen,
-  const char* pdelim,
-  int casesensitive)
+size_t str_split(char* dst[], const char* src, size_t n, size_t maxlen, const char* d, int cs)
 {
-  size_t isplit = 0;
-  size_t delim_len = str_length(pdelim);
-  size_t srclen = str_length(psrc);
-  char* ptr = psrc;
-  char* pend = ptr + srclen;
-  do {
-    ptr = str_contains(ptr, pdelim, casesensitive);
-    if (ptr) {
-      str_copy(pdst[isplit], maxlen, ptr);
-      ptr += delim_len;
-      if (ptr > pend) {
-        ptr = pend;
-      }
-    }
-  } while (ptr);
-  return isplit;
+	size_t count = 0;
+	const char* p = src;
+	size_t dl = str_length(d);
+	while (count < n && (p = str_contains(p, d, cs))) {
+		str_copy(dst[count], maxlen, p);
+		p += dl;
+		count++;
+	}
+	return count;
 }
 
-char* str_trim(char* pstr)
+char* str_trim(char* s)
 {
-  size_t len;
-  char* psrc = pstr;
-  if (!pstr || !pstr[0])
-    return pstr; //skip empty string
+	if (!s || !*s)
+		return s;
 
-  //TODO: K.D. optimize string length computation
-  pstr = str_trim_left_fast(pstr);
-  len = str_length(pstr);
-  pstr = str_trim_right_fast(pstr, len);
-  len = str_length(pstr);
-  if (psrc != pstr && len)
-    mem_move(psrc, pstr, len+1); //len+1 for copy '\0'
-  
-  return psrc;
+	char* l = str_trim_left_fast(s);
+	size_t len = str_length(l);
+	str_trim_right_fast(l, len);
+	if (l != s)
+		mem_move(s, l, str_length(l) + 1);
+	return s;
 }
 
-size_t str_chrcount(size_t* pdst, 
-  size_t maxlen, 
-  const char* pstr, 
-  const char* psymsstr)
+size_t str_chrcount(size_t* dst, size_t maxlen, const char* s, const char* syms)
 {
-  size_t vcount = 0;
-  for (size_t i = 0; i < maxlen 
-    && psymsstr[i]; i++) {
-    pdst[i] = 0;
-    for (size_t j = 0; pstr[j]; j++) {
-      if (pstr[j] == psymsstr[i]) {
-        /* sym found */
-        pdst[i]++;
-      }
-    }
+	size_t vc = 0;
+	for (size_t i = 0; i < maxlen && syms[i]; i++) {
+		dst[i] = 0;
+		for (size_t j = 0; s[j]; j++)
+			if (s[j] == syms[i])
+				dst[i]++;
 
-    if (pdst[i]) {
-      vcount++;
-    }
-  }
-  return vcount;
+		if (dst[i])
+			vc++;
+	}
+	return vc;
 }
 
-void str_filter_bad_chars(char* pstr)
+void str_filter_bad_chars(char* s)
 {
-  //TODO: K.D. add other format specifiers here
-  str_remove_char(pstr, '%');
+	str_remove_char(s, '%');
 }
 
-static inline int read_tetrade_inl(int sym)
+char* str_concat(char* pdst, size_t maxlen, const char* psrc)
 {
-  if (DG_INRANGE(sym, '0', '9'))
-    return sym - '0';
+	if (!pdst || !psrc || maxlen == 0)
+		return NULL;
 
-  sym = CHR_TO_LOWER(sym);
-  if (DG_INRANGE(sym, 'a', 'f'))
-    return (sym - 'a')+10;
-  
-  return -1;
+	size_t dst_len = str_length(pdst);
+	size_t src_len = str_length(psrc);
+	if (dst_len >= maxlen) {
+		pdst[maxlen - 1] = '\0';
+		return NULL;
+	}
+
+	size_t avail = maxlen - dst_len - 1;
+	size_t to_copy = (src_len < avail ? src_len : avail);
+	mem_copy(pdst + dst_len, psrc, to_copy);
+	pdst[dst_len + to_copy] = '\0';
+	if (src_len > avail)
+		return NULL;
+
+	return pdst;
 }
 
-static inline int read_hex_byte_inl(const char* pbyte)
+const char* str_data(uint8_t* dst, size_t maxlen, int type, const char* src)
 {
-  int low = read_tetrade_inl(pbyte[0]);
-  int high = read_tetrade_inl(pbyte[1]);
-  return (low << 4) | high;
+	const char* prefix = NULL; size_t plen = 0;
+	if (type == STRD_HEXVAL) { prefix = "0x"; plen = 2; }
+	else if (type == STRD_BINVAL) { prefix = "0b"; plen = 2; }
+	else if (type == STRD_OCTVAL) { prefix = "0"; plen = 1; }
+	const char* p = str_contains(src, prefix, 0);
+	if (!p) return src;
+	p += plen;
+	size_t i = 0;
+	while (p[i] && i < maxlen) {
+		int v = -1; unsigned char c = (unsigned char)p[i];
+		if (type == STRD_HEXVAL) {
+			if (CHR_IS_NUMERIC(c)) v = c - '0';
+			else if (CHR_IS_ALPHA(c)) {
+				if (CHR_IS_LOWER(c)) c = CHR_TO_UPPER(c);
+				if (c >= 'A' && c <= 'F') v = (c - 'A') + 10;
+			}
+		}
+		else if (type == STRD_BINVAL) {
+			if (c == '0' || c == '1') v = c - '0';
+		}
+		else if (type == STRD_OCTVAL) {
+			if (c >= '0' && c <= '7') v = c - '0';
+		}
+		if (v < 0) break;
+		dst[i++] = (uint8_t)v;
+	}
+	return p + i;
 }
 
-const char* str_data(uint8_t* pdst, size_t maxlen, int strd_type, const char* psrc)
+uint8_t* str_sig(const char* pstart, const char* pend, const char* sig, const char* mask)
 {
-#define BINPREFIX "0b"
-  DG_CONST_STRLEN(BINPREF_LENGTH, BINPREFIX);
-  const char* pstarthex = str_contains(psrc, BINPREFIX, 0);
-  if (!pstarthex)
-    return psrc; //bin pref not found, return src address
-
-  /* found bin prefix */
-  pstarthex += BINPREF_LENGTH;
-
-  //TODO: K.D. CONTINUE
-
-}
-
-uint8_t* str_sig(const char* pstart,
-  const char* pend, 
-  const char* psig, 
-  const char* pmask)
-{
-  for (const char *paddr = pstart; paddr < pend; paddr++) {
-    for (size_t i = 0; pmask[i]; i++) {
-      if (pmask[i] != '?' && psig[i] != paddr[i]) {
-        /* not found */
-        break;
-      }
-    }
-    /* found */
-    return paddr;
-  }
-  return NULL;
+	for (const char* p = pstart; p < pend; p++) {
+		size_t i;
+		for (i = 0; mask[i]; i++) {
+			if (mask[i] != '?' && sig[i] != p[i]) break;
+		}
+		if (!mask[i]) return (uint8_t*)p;
+	}
+	return NULL;
 }
 
 int chr_hex_tetrade(int sym)
 {
-  return read_tetrade_inl(sym);
+	if (CHR_IS_NUMERIC(sym))
+		return sym - '0';
+
+	unsigned char c = sym;
+	if (CHR_IS_LOWER(c))
+		c = CHR_TO_UPPER(c);
+
+	if (c >= 'A' && c <= 'F')
+		return (c - 'A') + 10;
+
+	return -1;
 }
 
-int str_hex_byte(const char* phexbyte)
+int str_hex_byte(const char* hex)
 {
-  return read_hex_byte_inl(phexbyte);
+	return (chr_hex_tetrade(hex[0]) << 4) | chr_hex_tetrade(hex[1]);
 }
 
-void* mem_set(void* pdst, int value, size_t count)
+void* mem_set(void* dst, int value, size_t count)
 {
-  char* pbdst = (char*)pdst;
-  for (size_t i = 0; i < count; i++)
-    pbdst[i] = 0;
-
-  return pdst;
+	unsigned char* d = (unsigned char*)dst;
+	for (size_t i = 0; i < count; i++)
+		d[i] = (unsigned char)value;
+	return dst;
 }
 
-void* mem_copy(void* pdst, const void* psrc, size_t count)
+void* mem_copy(void* dst, const void* src, size_t count)
 {
-  char* pcdst = (char*)pdst;
-  char* pcsrc = (char*)psrc;
-  if (count == 0 || pdst == psrc)
-    return pdst;
-
-  for (size_t i = 0; i < count; i++)
-    pcdst[i] = pcsrc[i];
-
-  return pdst;
+	unsigned char* d = (unsigned char*)dst;
+	const unsigned char* s = (const unsigned char*)src;
+	for (size_t i = 0; i < count; i++)
+		d[i] = s[i];
+	return dst;
 }
 
-void* mem_move(void* pdst, const void* psrc, size_t count)
+void* mem_move(void* dst, const void* src, size_t count)
 {
-  size_t i;
-  if (count == 0 || pdst == psrc)
-    return pdst;
-
-  char* pcdst = (char*)pdst;
-  char* pcsrc = (char*)psrc;
-  if (pcdst < pcsrc) {
-    for (i = 0; i < count; i++) {
-      pcdst[i] = pcsrc[i];
-    }
-  }
-  else {
-    for (i = count; i > 0; i--) {
-      pcdst[i-1] = pcsrc[i-1];
-    }
-  }
-  return pdst;
+	unsigned char* d = (unsigned char*)dst;
+	const unsigned char* s = (const unsigned char*)src;
+	if (d < s) {
+		for (size_t i = 0; i < count; i++)
+			d[i] = s[i];
+	}
+	else {
+		for (size_t i = count; i > 0; i--)
+			d[i - 1] = s[i - 1];
+	}
+	return dst;
 }
 
-int mem_compare(const void* psrca, const void* psrcb, size_t count)
+int mem_compare(const void* a, const void* b, size_t count)
 {
-  char* pbsrca = (char*)psrca;
-  char* pbsrcb = (char*)psrcb;
-  while (count--) {
-    if (*pbsrca != *pbsrcb) {
-      return *pbsrca - *pbsrcb;
-    }
-    pbsrca++, pbsrcb++;
-  }
-  return 0;
+	const unsigned char* x = (const unsigned char*)a;
+	const unsigned char* y = (const unsigned char*)b;
+	for (; count; count--) {
+		if (*x != *y)
+			return *x - *y;
+		x++; y++;
+	}
+	return 0;
 }
 
-bool string_copy_from(dg_string_t* pdst, const char* pstring)
-{
-  pdst->pstring = str_duplicate(&pdst->length, pstring);
-  return pdst->pstring != NULL;
+bool dgstr_copy_from(dg_string_t* dst, const char* src) {
+	if (!dst)
+		return false;
+
+	dst->pstring = (uint8_t*)str_duplicate(&dst->length, src);
+	return dst->pstring != NULL;
 }
 
-bool string_copy(dg_string_t* pdst, const dg_string_t* psrc)
-{
-  pdst->length = psrc->length;
-  pdst->pstring = str_duplicate(NULL, psrc->pstring);
-  return pdst->pstring != NULL;
+bool dgstr_copy(dg_string_t* dst, const dg_string_t* src) {
+	if (!dst || !src)
+		return false;
+
+	dst->pstring = (uint8_t*)str_duplicate(&dst->length, (char*)src->pstring);
+	return dst->pstring != NULL;
 }
 
-bool string_append(
-  dg_string_t* pdst, 
-  const char* pstring, 
-  size_t length)
-{
+bool dgstr_append(dg_string_t* dst, const char* src, size_t length) {
+	if (!dst || !src)
+		return false;
 
+	size_t sl = str_length(src);
+	if (length > sl)
+		length = sl;
 
+	size_t nl = dst->length + length;
+	uint8_t* buf = (uint8_t*)realloc(dst->pstring, nl + 1);
+	if (!buf)
+		return false;
 
-  return false;
+	mem_copy(buf + dst->length, src, length);
+	buf[nl] = '\0';
+	dst->pstring = buf;
+	dst->length = nl;
+	return true;
 }
 
-bool string_insert_from(dg_string_t* pdst, 
-  size_t from, 
-  const char* psrc)
-{
-  return false;
+bool dgstr_insert_from(dg_string_t* dst, size_t pos, const char* src) {
+	if (!dst || !src)
+		return false;
+
+	size_t sl = str_length(src);
+	if (sl == 0)
+		return true;
+
+	if (pos > dst->length)
+		pos = dst->length;
+
+	size_t nl = dst->length + sl;
+	uint8_t* buf = (uint8_t*)realloc(dst->pstring, nl + 1);
+	if (!buf)
+		return false;
+
+	mem_move(buf + pos + sl, buf + pos, dst->length - pos + 1);
+	mem_copy(buf + pos, src, sl);
+	buf[nl] = '\0'; dst->pstring = buf; dst->length = nl;
+	return true;
 }
 
-bool string_remove_chars(dg_string_t* pdst, int chr)
-{
-  size_t nremoved = str_remove_char(pdst->pstring, chr);
-  pdst->length -= nremoved;
-  return nremoved != 0;
+bool dgstr_remove_chars(dg_string_t* dst, int chr) {
+	if (!dst || !dst->pstring)
+		return false;
+
+	size_t n = str_remove_char((char*)dst->pstring, chr);
+	if (n)
+		dst->length -= n;
+
+	return n > 0;
 }
 
-void string_free(dg_string_t* pdst)
+void dgstr_free(dg_string_t* dst)
 {
-  pdst->length = 0;
-  if (pdst->pstring) {
-    free(pdst->pstring);
-    pdst->pstring = NULL;
-  }
+	if (dst && dst->pstring)
+		free(dst->pstring);
+	if (dst)
+		dst->length = 0;
+}
+
+size_t wcs_length(const dg_wchar_t* s)
+{
+	const dg_wchar_t* p = s;
+	size_t len = 0;
+	while (p && *p) {
+		++len;
+		++p;
+	}
+	return len;
+}
+
+dg_wchar_t* wcs_duplicate(size_t* dstlen, const dg_wchar_t* src)
+{
+	if (!src)
+		return NULL;
+
+	size_t len = wcs_length(src);
+	dg_wchar_t* dup = (dg_wchar_t*)malloc(sizeof(dg_wchar_t) * (len + 1));
+	if (!dup)
+		return NULL;
+
+	for (size_t i = 0; i < len; i++)
+		dup[i] = src[i];
+
+	dup[len] = '\0';
+	if (dstlen)
+		*dstlen = len;
+
+	return dup;
+}
+
+void wcs_free(const dg_wchar_t* src)
+{
+	if (src) {
+		free(src);
+	}
+}
+
+dg_wchar_t* wcs_copy(dg_wchar_t* pdst, size_t dstlen, const dg_wchar_t* psrc, size_t count)
+{
+	if (!pdst || !psrc || dstlen == 0)
+		return NULL;
+
+	size_t src_len = wcs_length(psrc);
+	size_t to_copy = (count == 0 ? src_len : count);
+	if (to_copy > dstlen - 1)
+		to_copy = dstlen - 1;
+
+	mem_copy(pdst, psrc, to_copy * sizeof(*psrc));
+	pdst[to_copy] = 0x0000;
+	return pdst;
 }

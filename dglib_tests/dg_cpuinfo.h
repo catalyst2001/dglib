@@ -44,5 +44,5 @@ typedef struct dg_cpu_info_s {
 	uint32_t features1;
 } dg_cpu_info_t;
 
-int cpu_get_info(dg_cpu_info_t *pdst);
-int cpu_get_current_frequency_ex(double *pdst_freq_hz);
+DG_API int cpu_get_info(dg_cpu_info_t *pdst);
+DG_API int cpu_get_current_frequency_ex(double *pdst_freq_hz);

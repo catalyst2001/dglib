@@ -66,7 +66,7 @@ void* mem_alloc_debug_default(void* poldmem, size_t size, uint32_t flags, const 
 int mem_free_debug_default(void* pmem, const char* pfile, int line) {
 	int status = mem_free_default(pmem);
 	if (status != DGERR_SUCCESS)
-		fprintf(stderr, "mem_free_debug_default(): free failed! status: %d  File: %s  Line: %d\n", 
+		fprintf(stderr, "mem_free_debug_default(): free failed! status: %d  File: %s  Line: %d\n",
 			status, pfile, line);
 
 	return status;
@@ -116,18 +116,18 @@ int DG_DTCALL dtadd_impl(int a, int b) {
 bool test_dispatch_tables()
 {
 	DT_DECL_BEGIN(zombie_dt)
-	DT_DECL_FUNCTION(int, dtabs, int)
-	DT_DECL_FUNCTION(int, dtadd, int, int)
-	DT_DECL_END();
+		DT_DECL_FUNCTION(int, dtabs, int)
+		DT_DECL_FUNCTION(int, dtadd, int, int)
+		DT_DECL_END();
 
 #define TEST_DT_FAMILY 0
 #define TEST_DT_OBJID 1
 
 	DT_INIT_BEGIN(zombie_dt_t, g_test_disptable, TEST_DT_FAMILY, TEST_DT_OBJID)
-	DT_INIT_FUNCTION(dtabs, dtabs_impl)
-	DT_INIT_FUNCTION(dtadd, dtadd_impl)
-	DT_INIT_END()
-	return true;
+		DT_INIT_FUNCTION(dtabs, dtabs_impl)
+		DT_INIT_FUNCTION(dtadd, dtadd_impl)
+		DT_INIT_END()
+		return true;
 }
 bool test_queues()
 {
@@ -154,8 +154,8 @@ bool test_list()
 		pnode = pnode->pnext;
 	}
 
-	printf("elem at 0: %d\n", *((int *)list_get_at(&list, 0)->data));
-	printf("elem at 1: %d\n", *((int *)list_get_at(&list, 1)->data));
+	printf("elem at 0: %d\n", *((int*)list_get_at(&list, 0)->data));
+	printf("elem at 1: %d\n", *((int*)list_get_at(&list, 1)->data));
 
 	list_free(&list);
 	return true;
@@ -185,7 +185,7 @@ bool test_darray3d()
 	clear_term();
 	printf("--------- printing 3d array by Z (depth) layers ---------\n");
 	for (z = 0; z < array3d.dim2; z++) {
-		printf("layer %zd of %zd\n", z+1, array3d.dim2);
+		printf("layer %zd of %zd\n", z + 1, array3d.dim2);
 		for (y = 0; y < array3d.dim1; y++) {
 			for (x = 0; x < array3d.dim0; x++) {
 				printf("%c ", "-1234"[darray3d_get(&array3d, x, y, z, int)]);
@@ -249,7 +249,7 @@ bool test_darray1d()
 	}
 	printf("\n");
 
-	printf("PRE size: %zd  cap: %zd  reserve: %zd\n", 
+	printf("PRE size: %zd  cap: %zd  reserve: %zd\n",
 		dynarray.size,
 		dynarray.capacity,
 		dynarray.reserve
@@ -335,7 +335,7 @@ bool test_bitvec()
 {
 	size_t i;
 	dg_dbitvec_t bitvec;
-	enum { TEST_BITVEC_SIZE=256 };
+	enum { TEST_BITVEC_SIZE = 256 };
 	if (!dbitvec_init(&bitvec, TEST_BITVEC_SIZE)) {
 		printf("dbitvec_init() failed\n");
 		return false;
@@ -361,7 +361,7 @@ void some_work(uint32_t n)
 	while (i)
 		i++;
 
-	some_work(n-1);
+	some_work(n - 1);
 }
 
 int thread_proc(struct dg_thrd_data_s* ptinfo)
@@ -406,15 +406,15 @@ bool test_threads()
 	}
 
 	dg_thread_init_info_t thread_init_info = {
-		.affinity=DGT_AUTO_AFFINITY,
-		.flags=DGTF_USE_LINALLOC,
-		.linalloc_size=1024,
-		.priority=DGPRIOR_LOW,
+		.affinity = DGT_AUTO_AFFINITY,
+		.flags = DGTF_USE_LINALLOC,
+		.linalloc_size = 1024,
+		.priority = DGPRIOR_LOW,
 		.pthread_end_routine = post_thread_proc,
 		.pthread_pre_routine = pre_start_thread_proc,
 		.pthread_start_routine = thread_proc,
-		.puserptr=(void*)1000,
-		.stack_size=0
+		.puserptr = (void*)1000,
+		.stack_size = 0
 	};
 
 	dg_thrd_t hthread = dg_thread_create_ex(&thread_init_info);
@@ -442,7 +442,7 @@ bool test_threads()
 		return false;
 	}
 
-	dg_thrd_data_t *pcurrthreaddata = dg_get_curr_thread_data();
+	dg_thrd_data_t* pcurrthreaddata = dg_get_curr_thread_data();
 	if (pnewattacheddata != pcurrthreaddata) {
 		printf("dg_get_curr_thread_data() returned different information block! Returned 0x%p  must be: 0x%p\n",
 			pcurrthreaddata, pnewattacheddata);
@@ -488,19 +488,99 @@ bool test_threadpool()
 			continue;
 		}
 	}
-	
+
 	printf("wait for finishing...\n");
 	getchar();
 	tp_deinit(&threadpool);
 	return true;
 }
+
 bool test_strings()
 {
-	dg_string_t string = string_init_static("");
+	char      buf[16];
+	uint8_t   out[8];
+	dg_string_t ds = { 0, NULL };
+	const char* p;
 
+	// str_compare
+	if (str_compare("abc", "Abc", 1) == 0) return false;
+	if (str_compare("abc", "Abc", 0) != 0) return false;
 
+	// str_copy + str_length
+	if (!str_copy(buf, sizeof(buf), "hello")) return false;
+	if (str_compare(buf, "hello", 1) != 0) return false;
+	if (str_length(buf) != 5)                return false;
+	if (str_copy(buf, 0, "x"))               return false;  // maxlen=0 → false
+
+	// str_to_lower / str_to_upper
+	str_copy(buf, sizeof(buf), "AbC1"); str_to_lower(buf);
+	if (str_compare(buf, "abc1", 1) != 0)    return false;
+	str_copy(buf, sizeof(buf), "AbC1"); str_to_upper(buf);
+	if (str_compare(buf, "ABC1", 1) != 0)    return false;
+
+	// str_remove_char + str_replace_char
+	str_copy(buf, sizeof(buf), "a_b_c_");
+	if (str_remove_char(buf, '_') != 3)      return false;
+	if (str_compare(buf, "abc", 1) != 0)     return false;
+	str_copy(buf, sizeof(buf), "aba");
+	if (str_replace_char(buf, 'a', 'x') != 2) return false;
+	if (str_compare(buf, "xbx", 1) != 0)     return false;
+
+	// str_contains, str_find_char / str_rfind_char
+	if (str_contains("abcd", "bc", 1) == NULL) return false;
+	if (str_find_char("abc", 'b') - "abc" != 1) return false;
+	if (str_rfind_char("abcb", 'b') - "abcb" != 3) return false;
+
+	// str_replace_string
+	str_copy(buf, sizeof(buf), "foobarfoo");
+	if (str_replace_string(buf, sizeof(buf), "foo", "X") != 5) return false;
+	if (str_compare(buf, "XbarX", 1) != 0)                    return false;
+
+	// str_is_numeric / str_is_alpha
+	if (!str_is_numeric("0123")) return false;
+	if (str_is_numeric("01a3"))  return false;
+	if (!str_is_alpha("AbcZ"))    return false;
+	if (str_is_alpha("Ab1Z"))    return false;
+
+	// mem_set / mem_copy / mem_move / mem_compare
+	mem_set(buf, 'A', 4); buf[4] = '\0';
+	if (str_compare(buf, "AAAA", 1) != 0) return false;
+	mem_copy(buf, "1234", 5);
+	if (str_compare(buf, "1234", 1) != 0) return false;
+	mem_move(buf + 1, buf, 4); buf[5] = '\0';
+	if (str_compare(buf, "11234", 1) != 0) return false;
+	if (mem_compare("abc", "abd", 3) >= 0) return false;
+
+	// dg_string_t: copy_from / copy / append / insert_from / remove_chars / free
+	if (!dgstr_copy_from(&ds, "hi"))               return false;
+	if (!dgstr_copy(&ds, &ds))                     return false;
+	if (!dgstr_append(&ds, "123", 3))              return false;
+	if (str_compare((char*)ds.pstring, "hi123", 1) != 0) return false;
+	if (!dgstr_insert_from(&ds, 2, "XY"))          return false;
+	if (str_compare((char*)ds.pstring, "hiXY123", 1) != 0) return false;
+	if (!dgstr_remove_chars(&ds, '1'))             return false;
+	if (str_find_char((char*)ds.pstring, '1') != NULL) return false;
+	dgstr_free(&ds);
+
+	// str_data
+	p = str_data(out, 8, STRD_HEXVAL, "0x1A3Z");
+	if (*p != 'Z' || out[0] != 0x1A || out[1] != 0x03) {
+		printf("str_data with STRD_HEXVAL failed\n");
+		return false;
+	}
+	p = str_data(out, 8, STRD_BINVAL, "0b1012");
+	if (*p != '2' || out[0] != 5) {
+		printf("str_data with STRD_BINVAL failed\n");
+		return false;
+	}
+	p = str_data(out, 8, STRD_OCTVAL, "0759");
+	if (*p != '9' || out[0] != 7 || out[1] != 5) {
+		printf("str_data with STRD_OCTVAL failed\n");
+		return false;
+	}
 	return true;
 }
+
 
 #define RUN_TEST(func, failmsg) do {\
 	if(!func()) {\
@@ -525,5 +605,5 @@ int main()
 
 
 
-	return 0;
+		return 0;
 }

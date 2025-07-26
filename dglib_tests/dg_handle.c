@@ -20,6 +20,16 @@ bool ha_init(dg_handle_alloc_t* pha,
   return true;
 }
 
+void ha_init_static(dg_handle_alloc_t* pha, size_t blocksize, size_t nhandles, uint8_t* pblocks, uint32_t* pgens)
+{
+  assert(pha && "pha is NULL");
+  pha->blocksize = blocksize;
+  pha->nhandles = nhandles;
+  pha->pblocks = pblocks;
+  pha->pgenerations = pgens;
+  pha->reserve = 0;
+}
+
 void ha_deinit(dg_handle_alloc_t* pha)
 {
   assert(pha && "pha is NULL");
@@ -117,12 +127,41 @@ bool ha_get_handle_by_index(handle_t* pdst, dg_handle_alloc_t* pha, size_t index
   return false;
 }
 
-bool ha_enumerate_handles(handle_t* pdst, dg_handle_alloc_t* pha)
+void* ha_get_handle_data(dg_handle_alloc_t* pha, handle_t handle)
 {
-  handle_t handle = *pdst;
+  if (!ha_is_valid_handle(pha, handle))
+    return NULL;
+
+  return &pha->pblocks[pha->blocksize * handle.index];
+}
+
+handle_t ha_get_first_handle(dg_handle_alloc_t* pha, size_t start, bool is_free_only)
+{
+  handle_t handle;
+  if (start >= pha->nhandles)
+    return DG_INVALID_HANDLE;
+
+  handle.index = start;
+  while (handle.index < pha->nhandles) {
+    handle.gen = pha->pgenerations[handle.index];
+    /* find busy handle */
+    //TODO: K.D. is_free_only ignored here!
+    if ((handle.gen & 1u) != 0) {
+      return handle;
+    }
+    handle.index++;
+  }
+  return DG_INVALID_HANDLE;
+}
+
+bool ha_get_next_handle(handle_t* pdst, dg_handle_alloc_t* pha)
+{
   assert(pha && "pha is NULL");
-  while ((size_t)handle.index < pha->nhandles) {
-    if (ha_is_valid_handle(pha, handle)) {
+  handle_t handle = *pdst;
+  uint32_t num_handles = (uint32_t)pha->nhandles;
+  while (handle.index < num_handles) {
+    handle.gen = pha->pgenerations[handle.index];
+    if ((handle.gen & 1u) != 0) {
       /* valid handle found */
       return true;
     }

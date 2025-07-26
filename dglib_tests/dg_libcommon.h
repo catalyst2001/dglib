@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-typedef void* dg_handle_t;
+typedef void* dg_voidptr_t;
 
 enum DGERR {
 	DGERR_SUCCESS = 0,
@@ -37,7 +37,7 @@ enum DGERR {
 * common declarations
 */
 #if defined(_MSC_VER)
-#define DG_API __cdecl
+#define DG_API __declspec(dllexport)
 #else
 /* GCC/CLANG */
 #define DG_API __attribute__((visibility("default")))

@@ -80,7 +80,7 @@ typedef struct dg_threadpool_s {
 * @return DGERR_OUT_OF_MEMORY if no enough RAM space
 * @return DGERR_UNKNOWN_ERROR if ocurred internal platform error
 */
-int tp_init(dg_threadpool_t *ptp, size_t num_threads);
+DG_API int tp_init(dg_threadpool_t *ptp, size_t num_threads);
 
 /**
 * @brief Adds special tasks to the general queue to complete worker threads.
@@ -89,7 +89,7 @@ int tp_init(dg_threadpool_t *ptp, size_t num_threads);
 * @param ptp - address of thread pool structure
 * @return nothing
 */
-void tp_stop(dg_threadpool_t* ptp);
+DG_API void tp_stop(dg_threadpool_t* ptp);
 
 /**
 * @brief Adds a task to a shared queue with a specified execution priority
@@ -103,7 +103,7 @@ void tp_stop(dg_threadpool_t* ptp);
 * @return DGERR_SUCCESS if operation sucessfully completed
 * @return DGERR_UNKNOWN_ERROR if ocurred internal platform error
 */
-int tp_task_add(dg_threadpool_t* ptp, 
+DG_API int tp_task_add(dg_threadpool_t* ptp,
 	dg_task_start_proc ptaskexec,
 	dg_task_skip_proc ptaskskip,
 	uint32_t task_priority,
@@ -116,7 +116,7 @@ int tp_task_add(dg_threadpool_t* ptp,
 * @param ptp - address of thread pool structure
 * @return nothing
 */
-void tp_join(dg_threadpool_t* ptp);
+DG_API void tp_join(dg_threadpool_t* ptp);
 
 /**
 * @brief Terminates the thread pool
@@ -124,4 +124,4 @@ void tp_join(dg_threadpool_t* ptp);
 * @param ptp - address of thread pool structure
 * @return DGERR_SUCCESS if operation sucessfully completed
 */
-int tp_deinit(dg_threadpool_t* ptp);
+DG_API int tp_deinit(dg_threadpool_t* ptp);

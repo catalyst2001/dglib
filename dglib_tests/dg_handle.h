@@ -31,38 +31,33 @@ typedef struct dg_handle_alloc_s {
 	uint8_t*  pblocks;
 } dg_handle_alloc_t;
 
-#define ha_init_data_arrays(num_handles, bsize)\
-	uint8_t block
-
-#define ha_init_static(num_handles, bsize, pgens, pblks)\
-	((dg_handle_alloc_t){\
-		.blocksize=bsize,\
-		.reserve=1,\
-		.nhandles=num_handles,\
-		.pgenerations=pgens,\
-		.pblocks=pblks\
-	})
+#define HA_DECL_DATA_ARRAYS(name, count, elemsize) struct {\
+	uint8_t blocks[count*elemsize]; \
+	uint32_t generations[count]; \
+} name
 
 /**
 * @brief creates new handle allocator
-* 
-* 
-* 
-* 
 */
-bool ha_init(dg_handle_alloc_t *pha, 
+DG_API bool ha_init(dg_handle_alloc_t *pha,
 	size_t blocksize,
 	size_t nhandles,
 	size_t ngrow_reserve);
 
-void ha_deinit(dg_handle_alloc_t* pha);
+DG_API void ha_init_static(dg_handle_alloc_t* pha,
+	size_t blocksize,
+	size_t nhandles,
+	uint8_t *pblocks,
+	uint32_t *pgens);
+
+DG_API void ha_deinit(dg_handle_alloc_t* pha);
 
 typedef struct dg_hinfo_s {
 	size_t allocated;
 	size_t max_handles;
 } dg_hinfo_t;
 
-bool ha_get_info(dg_hinfo_t *pdst, dg_handle_alloc_t* pha);
+DG_API bool ha_get_info(dg_hinfo_t *pdst, dg_handle_alloc_t* pha);
 
 typedef struct dg_halloc_result_s {
 	handle_t new_handle;
@@ -70,12 +65,16 @@ typedef struct dg_halloc_result_s {
 	size_t   handle_body_size;
 } dg_halloc_result_t;
 
-bool ha_alloc_handle(dg_halloc_result_t *pdst, dg_handle_alloc_t* pha);
+DG_API bool ha_alloc_handle(dg_halloc_result_t *pdst, dg_handle_alloc_t* pha);
 
-bool ha_free_handle(dg_handle_alloc_t* pha, handle_t handle);
+DG_API bool ha_free_handle(dg_handle_alloc_t* pha, handle_t handle);
 
-bool ha_is_valid_handle(dg_handle_alloc_t* pha, handle_t handle);
+DG_API bool ha_is_valid_handle(dg_handle_alloc_t* pha, handle_t handle);
 
-bool ha_get_handle_by_index(handle_t *pdst, dg_handle_alloc_t* pha, size_t index);
+DG_API bool ha_get_handle_by_index(handle_t *pdst, dg_handle_alloc_t* pha, size_t index);
 
-bool ha_enumerate_handles(handle_t *pdst, dg_handle_alloc_t* pha);
+DG_API void* ha_get_handle_data(dg_handle_alloc_t* pha, handle_t handle);
+
+DG_API handle_t ha_get_first_handle(dg_handle_alloc_t* pha, size_t start, bool is_free_only);
+
+DG_API bool ha_get_next_handle(handle_t *pdst, dg_handle_alloc_t* pha);

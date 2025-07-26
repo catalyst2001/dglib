@@ -29,9 +29,9 @@ void*  linalloc_hunk_alloc(dg_hunkalloc_t* pdst, size_t size);
 void   linalloc_reset(dg_hunkalloc_t* pdst);
 #define linalloc_is_present(p) ((p)->pdata)
 
-bool   la_present();
-bool   la_resize(size_t newsize);
-size_t la_get_capacity();
-size_t la_get_position();
-void*  la_hunk_alloc(size_t size, bool bclear);
-void   la_reset();
+DG_API bool   la_present();
+DG_API bool   la_resize(size_t newsize);
+DG_API size_t la_get_capacity();
+DG_API size_t la_get_position();
+DG_API void*  la_hunk_alloc(size_t size, bool bclear);
+DG_API void   la_reset();

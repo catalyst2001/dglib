@@ -41,12 +41,9 @@ void mutex_free(dg_mutex_t hmutex)
 
 dg_cond_t cond_alloc(const char* pname)
 {
-  CONDITION_VARIABLE* pcv = DG_NEW(CONDITION_VARIABLE);
-  if (pcv)
-    return NULL;
-
-  InitializeConditionVariable(pcv);
-  return (dg_cond_t)pcv;
+  CONDITION_VARIABLE cv;
+  InitializeConditionVariable(&cv);
+  return (dg_cond_t)cv.Ptr;
 }
 
 void cond_wait(dg_cond_t hcond, dg_mutex_t hmutex)

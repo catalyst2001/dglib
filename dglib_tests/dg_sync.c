@@ -41,9 +41,12 @@ void mutex_free(dg_mutex_t hmutex)
 
 dg_cond_t cond_alloc(const char* pname)
 {
-  CONDITION_VARIABLE cv;
-  InitializeConditionVariable(&cv);
-  return (dg_cond_t)cv.Ptr;
+  CONDITION_VARIABLE *pcv = DG_NEW(CONDITION_VARIABLE);
+  if (!pcv)
+    return NULL;
+
+  InitializeConditionVariable(pcv);
+  return (dg_cond_t)pcv;
 }
 
 void cond_wait(dg_cond_t hcond, dg_mutex_t hmutex)
@@ -70,7 +73,6 @@ void cond_broadcast(dg_cond_t hcond)
 void cond_free(dg_cond_t hcond)
 {
   assert(hcond && "hcond is NULL");
-  //((PCONDITION_VARIABLE)hcond);
   free(hcond);
 }
 
@@ -116,15 +118,15 @@ bool semaphore_timed_wait(dg_semaphore_t hsem, int waitms)
   return WaitForSingleObject((HANDLE)hsem, (DWORD)waitms) == WAIT_OBJECT_0;
 }
 
-bool semaphore_try_wait(dg_semaphore_t hsem)
-{
-  assert(hsem && "hsem is NULL");
-  if (WaitForSingleObject((HANDLE)hsem, INFINITE) == WAIT_OBJECT_0) {
-    ReleaseSemaphore((HANDLE)hsem, 1, NULL);
-    return true;
-  }
-  return false;
-}
+//bool semaphore_try_wait(dg_semaphore_t hsem)
+//{
+//  assert(hsem && "hsem is NULL");
+//  if (WaitForSingleObject((HANDLE)hsem, INFINITE) == WAIT_OBJECT_0) {
+//    ReleaseSemaphore((HANDLE)hsem, 1, NULL);
+//    return true;
+//  }
+//  return false;
+//}
 
 void semaphore_post(dg_semaphore_t hsem)
 {
@@ -136,6 +138,57 @@ void semaphore_free(dg_semaphore_t hsem)
 {
   assert(hsem && "hsem is NULL");
   CloseHandle((HANDLE)hsem);
+}
+
+dg_rwlock_t rwlock_alloc(const char* pname)
+{
+  SRWLOCK *prwlock = DG_NEW(SRWLOCK);
+  if (!prwlock)
+    return NULL;
+
+  InitializeSRWLock(prwlock);
+  return (dg_rwlock_t)prwlock;
+}
+
+void rwlock_free(dg_rwlock_t hrwlock)
+{
+  if (hrwlock) {
+    free(hrwlock);
+  }
+}
+
+int rwlock_rdlock(dg_rwlock_t hrwlock)
+{
+  AcquireSRWLockShared((PSRWLOCK)hrwlock);
+  return 0;
+}
+
+int rwlock_rdunlock(dg_rwlock_t hrwlock)
+{
+  ReleaseSRWLockShared((PSRWLOCK)hrwlock);
+  return 0;
+}
+
+int rwlock_wrlock(dg_rwlock_t hrwlock)
+{
+  AcquireSRWLockExclusive((PSRWLOCK)hrwlock);
+  return 0;
+}
+
+int rwlock_wrunlock(dg_rwlock_t hrwlock)
+{
+  ReleaseSRWLockExclusive((PSRWLOCK)hrwlock);
+  return 0;
+}
+
+int rwlock_try_rdlock(dg_rwlock_t hrwlock)
+{
+  return TryAcquireSRWLockShared((PSRWLOCK)hrwlock) ? 0 : 1;
+}
+
+int rwlock_try_wrlock(dg_rwlock_t hrwlock)
+{
+  return TryAcquireSRWLockExclusive((PSRWLOCK)hrwlock) ? 0 : 1;
 }
 
 #else

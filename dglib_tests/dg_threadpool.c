@@ -31,7 +31,7 @@ int tp_init(dg_threadpool_t* ptp, size_t num_threads)
   cpu_get_info(&cpuinfo);
   /* limit number of logical processors */
   if (cpuinfo.num_logical_processors > num_threads)
-    cpuinfo.num_logical_processors = num_threads;
+    cpuinfo.num_logical_processors = (uint32_t)num_threads;
 
   /* init containers */
   ptp->pfinish_sem = semaphore_alloc(0, (int)cpuinfo.num_logical_processors, "dg_threadpool_t:pfinish_sem");

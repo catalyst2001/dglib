@@ -12,6 +12,10 @@
 #include "dg_thread.h"
 #include "dg_threadpool.h"
 #include "dg_string.h"
+#include "dg_random.h"
+#include "dg_sys.h"
+
+#include "dg_main.h"
 
 #define DG_MEMNOVERRIDE
 #include "dg_alloc.h"
@@ -388,12 +392,10 @@ void post_thread_proc(struct dg_thrd_data_s* ptinfo)
 	printf("post_thread_proc() called with info 0x%p\n", ptinfo);
 }
 
-bool init_thread_subsystem();
-
 bool test_threads()
 {
 	int result;
-	if (!init_thread_subsystem()) {
+	if (!initialize_threads()) {
 		printf("init_thread_subsystem() failed!\n");
 		return false;
 	}
@@ -467,7 +469,7 @@ bool test_threadpool()
 	int             status;
 	dg_threadpool_t threadpool;
 
-	if (!init_thread_subsystem()) {
+	if (!initialize_threads()) {
 		printf("init_thread_subsystem() failed!\n");
 		return false;
 	}
@@ -581,6 +583,35 @@ bool test_strings()
 	return true;
 }
 
+bool test_sys()
+{
+	dg_sysui pwindow = sysui_window_create(NULL, "test window", DG_SYSUI_POS_CENTER, DG_SYSUI_POS_CENTER, 800, 600);
+	if (!pwindow) {
+		printf("sysui_window_create() failed! pwindow was nullptr");
+		return false;
+	}
+
+	dg_sysui_event_t evt;
+	while (1) {
+		while (sysui_poll_events(&evt)) {
+			switch (evt.evt) {
+			case SYSUI_EVENT_SPAWN:
+				printf("window spawned\n");
+				break;
+			case SYSUI_EVENT_DIE:
+				printf("windiow die\n");
+				break;
+			}
+		}
+
+		/* other work */
+		dg_delay_ms(50);
+		printf("executing some...\n");
+	}
+
+	sysui_kill(pwindow);
+	return true;
+}
 
 #define RUN_TEST(func, failmsg) do {\
 	if(!func()) {\
@@ -591,6 +622,11 @@ bool test_strings()
 
 int main()
 {
+	if (!dg_initialize()) {
+		printf("dg_initialize(): failed!\n");
+		return 1;
+	}
+
 	//RUN_TEST(test_darray1d, "1D array testing failed!")
 	//RUN_TEST(test_darray2d, "2D array testing failed!")
 	//RUN_TEST(test_darray3d, "3D array testing failed!")
@@ -601,9 +637,11 @@ int main()
 	//RUN_TEST(test_bitvec, "bitvec testing failed!")
 	//RUN_TEST(test_threads, "threads testing failed!")
 	//RUN_TEST(test_threadpool, "threads pool testing failed!")
-	RUN_TEST(test_strings, "string testing failed!")
+	//RUN_TEST(test_strings, "string testing failed!")
+	RUN_TEST(test_sys, "sys testing failed!")
+	
 
 
-
-		return 0;
+	dg_deinitialize();
+	return 0;
 }

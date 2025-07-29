@@ -34,32 +34,35 @@ dg_thrd_data_t* thread_internal_new_data(const dg_thread_init_info_t* pthreadinf
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-DWORD dg_threadsys_tls_index = TLS_OUT_OF_INDEXES;
+DWORD glob_tls_index = TLS_OUT_OF_INDEXES;
 
-bool init_thread_subsystem()
+int initialize_threads()
 {
-	dg_threadsys_tls_index = TlsAlloc();
-	if (TLS_OUT_OF_INDEXES == dg_threadsys_tls_index) {
+	DG_LOG("initialize_threads(): initializing threads subsystem...");
+	glob_tls_index = TlsAlloc();
+	if (TLS_OUT_OF_INDEXES == glob_tls_index) {
 		DG_ERROR("init_thread_subsystem(): TlsAlloc() returned TLS_OUT_OF_INDEXES! No free TLS slots");
-		return false;
+		return 0;
 	}
-	return true;
+	DG_LOG("initialize_threads(): threads initialized! TLS is %d", glob_tls_index);
+	return 1;
 }
 
-void deinit_thread_subsystem()
+void deinitialize_threads()
 {
-	if (dg_threadsys_tls_index != TLS_OUT_OF_INDEXES) {
-		TlsFree(dg_threadsys_tls_index);
-		dg_threadsys_tls_index = TLS_OUT_OF_INDEXES;
+	DG_LOG("deinitialize_threads(): deinitializing threads subsystem...");
+	if (glob_tls_index != TLS_OUT_OF_INDEXES) {
+		TlsFree(glob_tls_index);
+		glob_tls_index = TLS_OUT_OF_INDEXES;
 	}
 }
 
 DWORD WINAPI win32_thread_proc(dg_thrd_data_t* pthread_data)
 {
 	int return_value;
-	assert(dg_threadsys_tls_index != -1 && "dg_threadsys_tls_index is invalid!");
+	assert(glob_tls_index != -1 && "dg_threadsys_tls_index is invalid!");
 	assert(pthread_data->pthread_start_routine != NULL && "pthread_data->pthread_start_routine is NULL");
-	TlsSetValue(dg_threadsys_tls_index, pthread_data);
+	TlsSetValue(glob_tls_index, pthread_data);
 	if(pthread_data->pthread_pre_routine)
 		pthread_data->pthread_pre_routine(pthread_data);
 
@@ -134,7 +137,7 @@ dg_thrd_t dg_thread_create(uint32_t stacksize, dg_thrd_proc pthreadroutine, void
 
 dg_thrd_data_t* dg_get_curr_thread_data()
 {
-	return TlsGetValue(dg_threadsys_tls_index);
+	return TlsGetValue(glob_tls_index);
 }
 
 dg_thrd_t dg_get_curr_thread()
@@ -238,7 +241,7 @@ dg_thrd_data_t* dg_thread_attach_info(uint32_t flags, size_t linalloc_size)
 	if (!pthread_data)
 		return NULL;
 
-	if (!TlsSetValue(dg_threadsys_tls_index, pthread_data)) {
+	if (!TlsSetValue(glob_tls_index, pthread_data)) {
 		dwerror = GetLastError();
 		DG_ERROR("TlsSetValue() failed! GetLastError()=%d (0x%x)", dwerror, dwerror);
 		free(pthread_data);

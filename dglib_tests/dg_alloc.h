@@ -37,3 +37,5 @@ extern dg_memmgr_dt_t *gpmmdt;
 #endif
 
 #define DG_NEW(type) ((type *)calloc(1, sizeof(type)))
+#define DG_ALLOC(type, count) ((type *)calloc(count, sizeof(type)))
+#define DG_FREE(addr) (free(addr))

@@ -10,7 +10,7 @@ enum DGTERM_EVENT {
 };
 
 typedef struct dg_tevent_s {
-	uint32_t event;
+	uint32_t evt;
 	uint32_t ctlchr;
 	uint32_t chr;
 	char    *ptext;

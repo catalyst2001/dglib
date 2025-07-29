@@ -295,17 +295,18 @@ void fs_close(file_t hfile)
 /**
 * INTERNAL FILESYSTEM INITIALIZATION
 */
-bool initialize_filesystem()
+int initialize_filesystem()
 {
+  DG_LOG("initialize_filesystem(): initializing filesystem...");
   if (glob_sp_mtx) {
     DG_ERROR("initialize_filesystem(): already initialized");
-    return false;
+    return 0;
   }
 
   glob_sp_mtx = mutex_alloc("dg_filesystem:searchpath");
   if (!glob_sp_mtx) {
     DG_ERROR("initialize_filesystem(): mutex allocation failed");
-    return false;
+    return 0;
   }
 
   ha_init_static(&glob_search_pathes,
@@ -320,7 +321,7 @@ bool initialize_filesystem()
     file_handles.blocks,
     file_handles.generations);
 
-  return true;
+  return 1;
 }
 
 /**
@@ -328,6 +329,7 @@ bool initialize_filesystem()
 */
 void deinitialize_filesystem()
 {
+  DG_LOG("deinitialize_filesystem(): deinitializing filesystem...");
   if (glob_sp_mtx) {
     /* deinitialize */  
     mutex_free(glob_sp_mtx);

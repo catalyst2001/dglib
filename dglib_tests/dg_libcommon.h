@@ -25,6 +25,7 @@ enum DGERR {
 //TODO: K.D. nothing temporarily
 #define DG_ERROR(x, ...) ((void)0)
 #define DG_WARNING(x, ...) ((void)0)
+#define DG_LOG(x, ...) ((void)0)
 
 #define DG_ALIGN_DOWN(x, a) (((x)/(a))*(a))
 #define DG_ALIGN_UP(x, a)   ((((x)+(a)-1)/(a))*(a))

@@ -49,6 +49,10 @@ typedef struct dg_sysui_size_s {
 	long width, height;
 } dg_sysui_size_t;
 
+typedef struct dg_sysui_point_s {
+	long x, y;
+} dg_sysui_point_t;
+
 typedef dg_voidptr_t dg_sysui;
 
 typedef struct dg_sysui_create_info_ex_s {
@@ -101,16 +105,39 @@ enum DG_SYSUI_EVENT {
 	SYSUI_EVENT_KEYUP, /*< keyboard or mouse key is released */
 	SYSUI_EVENT_CHAR, /*< translated char symbol with current language */
 	SYSUI_EVENT_STATECHANGE, /*< window state changed */
+	SYSUI_EVENT_DRAGFILE, /* < window received file in drag-n-drop */
 	SYSUI_EVENT_XEVENT, /* reserved */
 };
+
+typedef struct dg_sysui_keyevt_s {
+	uint32_t scancode;
+	uint32_t keycode;
+	uint32_t modifiers;
+} dg_sysui_keyevt_t;
+
+typedef struct dg_sysui_mouseevt_s {
+	uint32_t         key;
+	uint32_t         kstate;
+	uint32_t         wheeldelta;
+	dg_sysui_point_t point;
+} dg_sysui_mouseevt_t;
+
+typedef struct dg_sysui_sizeevt_s {
+	dg_sysui_size_t  size;
+} dg_sysui_sizeevt_t;
 
 /**
 * @brief events structure
 */
-typedef struct dg_sysui_event_s {
-	uint32_t evt;
-	dg_sysui hfrom;
-	dg_sysui_rect_t rect;
+typedef union dg_sysui_event_s {
+	struct {
+		uint32_t evt;
+		dg_sysui hfrom;
+	};
+	dg_sysui_keyevt_t   key;
+	dg_sysui_mouseevt_t mouse;
+	dg_sysui_sizeevt_t  size;
+	dg_sysui_rect_t     rect;
 } dg_sysui_event_t;
 
 #define DG_SYSUI_SLONG_BITS (sizeof(long)*8-1)
@@ -122,6 +149,52 @@ DG_API int      sysui_window_set_title(dg_sysui hwindow, const char *ptitle);
 DG_API void*    sysui_window_set_userdata(dg_sysui hwindow, uint32_t slot, const void *pdata);
 DG_API void*    sysui_window_get_userdata(dg_sysui hwindow, uint32_t slot);
 
-DG_API bool sysui_push_event(dg_sysui hwindow, const dg_sysui_event_t* psrc);
-DG_API bool sysui_poll_events(dg_sysui_event_t *pdst);
-DG_API bool sysui_wait_events(dg_sysui_event_t *pdst);
+DG_API bool     sysui_push_event(dg_sysui hwindow, const dg_sysui_event_t* psrc);
+DG_API bool     sysui_poll_events(dg_sysui_event_t *pdst);
+DG_API bool     sysui_wait_events(dg_sysui_event_t *pdst);
+
+/*
+===============================
+					System input abstraction API
+To unify virtual key codes, key constants defined by this 
+abstraction are used, which try to follow the most common majority of virtual codes.
+===============================
+*/
+DG_API uint8_t* sysin_get_keys_array(size_t *pdstsize);
+DG_API int      sysin_get_key_state(int keycode);
+
+#define SYSKS_RELEASED  (0) /*< key is released */
+#define SYSKS_PRESSED   (1 << 1) /*< key is pressed */
+#define SYSKS_REPEAT    (1 << 0) /*< key repeat */
+#define SYSKS_RIGHT     (1 << 2) /*< if not set, pressed left key otherwise right */
+
+enum DG_SYSKEY {
+	/* special */
+	SKEY_RETURN=0, SKEY_ESCAPE, SKEY_BACKSPACE, SKEY_TAB, SKEY_SPACE,
+	SKEY_LEFT, SKEY_RIGHT, SKEY_UP, SKEY_DOWN,
+	SKEY_INSERT, SKEY_DELETE, SKEY_HOME, SKEY_END, SKEY_PAGEUP, SKEY_PAGEDOWN,
+	SKEY_SHIFT, SKEY_CONTROL, SKEY_ALT,
+	SKEY_F1, SKEY_F2, SKEY_F3, SKEY_F4, SKEY_F5, SKEY_F6,
+	SKEY_F7, SKEY_F8, SKEY_F9, SKEY_F10, SKEY_F11, SKEY_F12,
+
+	/* mouse keys */
+	SKEY_MOUSEL, SKEY_MOUSER, SKEY_MOUSEM,
+	SKEY_MOUSEX0, SKEY_MOUSEX1, SKEY_MOUSEX2, 
+	SKEY_MOUSEX3, SKEY_MOUSEX4, SKEY_MOUSEX5,
+	SKEY_MOUSEX6, SKEY_MOUSEX7,
+
+	/* numbers */
+	SKEY_0='0', SKEY_1, SKEY_2, SKEY_3, SKEY_4, SKEY_5, SKEY_6,
+	SKEY_7, SKEY_8, SKEY_9,
+
+	/* alpha */
+	SKEY_A = 'A', SKEY_B, SKEY_C, SKEY_D, SKEY_E, SKEY_F, SKEY_G, SKEY_H, SKEY_I, SKEY_J,
+	SKEY_K, SKEY_L, SKEY_M, SKEY_N, SKEY_O, SKEY_P, SKEY_Q, SKEY_R, SKEY_S, SKEY_T,
+	SKEY_U, SKEY_V, SKEY_W, SKEY_X, SKEY_Y, SKEY_Z,
+
+	/* numpad */
+	SKEY_NUM0, SKEY_NUM1, SKEY_NUM2, SKEY_NUM3, SKEY_NUM4,
+	SKEY_NUM5, SKEY_NUM6, SKEY_NUM7, SKEY_NUM8, SKEY_NUM9,
+	SKEY_TOTAL,
+	SKEY_UNKNOWN = SKEY_TOTAL
+};

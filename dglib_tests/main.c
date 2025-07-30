@@ -602,11 +602,12 @@ bool test_sys()
 				printf("windiow die\n");
 				break;
 			}
+			printf("received event: %d\n", evt.evt);
 		}
 
 		/* other work */
 		dg_delay_ms(50);
-		printf("executing some...\n");
+		//printf("executing some...\n");
 	}
 
 	sysui_kill(pwindow);

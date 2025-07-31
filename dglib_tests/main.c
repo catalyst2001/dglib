@@ -592,17 +592,50 @@ bool test_sys()
 	}
 
 	dg_sysui_event_t evt;
-	while (1) {
+	bool bcontinue = true;
+	while (bcontinue) {
 		while (sysui_poll_events(&evt)) {
 			switch (evt.evt) {
 			case SYSUI_EVENT_SPAWN:
-				printf("window spawned\n");
+				printf("SYSUI_EVENT_SPAWN\n");
 				break;
 			case SYSUI_EVENT_DIE:
-				printf("windiow die\n");
+				printf("SYSUI_EVENT_DIE\n");
 				break;
+			case SYSUI_EVENT_RESIZE:
+				printf("SYSUI_EVENT_RESIZE: %d %d\n", evt.size.width, evt.size.height);
+				break;
+			case SYSUI_EVENT_ENTERFOCUS:
+				printf("SYSUI_EVENT_ENTERFOCUS\n");
+				break;
+			case SYSUI_EVENT_LEAVEFOCUS:
+				printf("SYSUI_EVENT_LEAVEFOCUS\n");
+				break;
+			case SYSUI_EVENT_MOUSECLICK:
+				printf("SYSUI_EVENT_MOUSECLICK: button(%d) state(%d) pt(%d;%d)\n", 
+					evt.mouse.key, evt.mouse.kstate, evt.mouse.point.x, evt.mouse.point.y);
+				break;
+			case SYSUI_EVENT_MOUSEMOVE:
+				printf("SYSUI_EVENT_MOUSEMOVE:  pt(%d;%d)\n", evt.mouse.point.x, evt.mouse.point.y);
+				break;
+			case SYSUI_EVENT_MOUSEWHEEL:
+				printf("SYSUI_EVENT_MOUSEWHEEL:  delta: %d\n", evt.mouse.wheeldelta);
+				break;
+			case SYSUI_EVENT_KEYDOWN:
+				printf("SYSUI_EVENT_KEYDOWN\n");
+				break;
+			case SYSUI_EVENT_KEYUP:
+				
+				printf("SYSUI_EVENT_KEYUP\n");
+				break;
+			case SYSUI_EVENT_CLOSE:
+				printf("SYSUI_EVENT_CLOSE\n");
+				sysui_kill(pwindow);
+				bcontinue = false;
+				break;
+			//default:
+				//printf("received event: %d\n", evt.evt);
 			}
-			printf("received event: %d\n", evt.evt);
 		}
 
 		/* other work */

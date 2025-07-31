@@ -18,7 +18,15 @@ typedef struct sysui_event_queue_s {
 	dg_mutex_t mutex;
 } sysui_event_queue_t;
 
+#define WF_NONE 0
+#ifdef _WIN32
+#define W32F_SIZEMOVE (1<<0)
+#else
+
+#endif
+
 typedef struct sysui_window_data_s {
+	int   flags;
 	void* puserdata[SYSUI_MAX_USERDATA];
 } sysui_window_data_t;
 
@@ -235,11 +243,61 @@ int win32_dlenum(hdl_t* pdsthmodules, size_t maxlen)
 	return 1;
 }
 
+inline sysui_window_data_t* win32_window_data(dg_sysui hwindow)
+{
+	return (sysui_window_data_t*)GetWindowLongPtr(hwindow, 0);
+}
+
+static inline uint32_t win32_translate_mouse_button(UINT msg, WPARAM wparam) {
+	switch (msg) {
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+		return SKEY_MOUSEL;
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+		return SKEY_MOUSER;
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+		return SKEY_MOUSEM;
+	case WM_XBUTTONDOWN:
+	case WM_XBUTTONUP: {
+		WORD btn = GET_XBUTTON_WPARAM(wparam);
+		if (btn == XBUTTON1)
+			return SKEY_MOUSEX0;
+		if (btn == XBUTTON2)
+			return SKEY_MOUSEX1;
+		// future extension
+		return SKEY_MOUSEX0 + btn;
+	}
+	}
+	return SKEY_MOUSEL; // fallback
+}
+
 LRESULT CALLBACK win32_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-	dg_sysui_event_t ev = { 0 };
+	dg_sysui_event_t ev;
+	RECT             rect;
+	sysui_window_data_t* pdata = win32_window_data((dg_sysui)hwnd);
+	if (!pdata)
+		return DefWindowProcA(hwnd, msg, wparam, lparam);
+
+	mem_set(&ev, 0, sizeof(ev));
 	ev.hfrom = (dg_sysui)hwnd;
 	switch (msg) {
+	case WM_ENTERSIZEMOVE:
+		pdata->flags |= W32F_SIZEMOVE;
+		break;
+
+	case WM_EXITSIZEMOVE:
+		pdata->flags &= ~W32F_SIZEMOVE;
+		GetClientRect(hwnd, &rect);
+		ev.hfrom = (dg_sysui)hwnd;
+		ev.evt = SYSUI_EVENT_RESIZE;
+		ev.size.width = rect.right;
+		ev.size.height = rect.bottom;
+		sysui_push_event(ev.hfrom, &ev);
+		break;
+
 	case WM_KEYDOWN:
 		ev.evt = SYSUI_EVENT_KEYDOWN;
 		ev.key.keycode = (uint32_t)glob_fwd_keyremap[wparam];
@@ -265,18 +323,32 @@ LRESULT CALLBACK win32_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 	case WM_CHAR:
 		ev.evt = SYSUI_EVENT_CHAR;
 		ev.key.keycode = (uint32_t)wparam;
-		return sysui_push_event(ev.hfrom, &ev);
-
-	case WM_CLOSE:
-		ev.evt = SYSUI_EVENT_DIE;
 		sysui_push_event(ev.hfrom, &ev);
 		return 0;
 
-	case WM_SIZE:
-		ev.evt = SYSUI_EVENT_RESIZE;
-		ev.size.size.width = LOWORD(lparam);
-		ev.size.size.height = HIWORD(lparam);
+	case WM_CLOSE:
+		ev.evt = SYSUI_EVENT_CLOSE;
 		sysui_push_event(ev.hfrom, &ev);
+		return 0;
+
+	case WM_DESTROY:
+		/* add last event and remove 
+		   allocated window data memory */
+		ev.evt = SYSUI_EVENT_DIE;
+		sysui_push_event(ev.hfrom, &ev);
+
+		DG_FREE(pdata);
+		SetWindowLongPtrA(hwnd, 0, NULL); // set NULL
+		return 0;
+
+	case WM_SIZE:
+		if (!(pdata->flags & W32F_SIZEMOVE)) {
+			/* push size event once */
+			ev.evt = SYSUI_EVENT_RESIZE;
+			ev.size.width = LOWORD(lparam);
+			ev.size.height = HIWORD(lparam);
+			sysui_push_event(ev.hfrom, &ev);
+		}
 		return 0;
 
 	case WM_MOUSEMOVE:
@@ -299,7 +371,7 @@ LRESULT CALLBACK win32_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 	case WM_RBUTTONDOWN:
 	case WM_MBUTTONDOWN:
 		ev.evt = SYSUI_EVENT_MOUSECLICK;
-		ev.mouse.key = msg; //TODO: K.D. fix here
+		ev.mouse.key = win32_translate_mouse_button(msg, wparam);
 		ev.mouse.kstate = SYSKS_PRESSED;
 		ev.mouse.point.x = GET_X_LPARAM(lparam);
 		ev.mouse.point.y = GET_Y_LPARAM(lparam);
@@ -311,7 +383,7 @@ LRESULT CALLBACK win32_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 	case WM_MBUTTONUP:
 		ev.evt = SYSUI_EVENT_MOUSECLICK;
 		ev.mouse.kstate = SYSKS_RELEASED;
-		ev.mouse.key = msg; //TODO: K.D. fix here
+		ev.mouse.key = win32_translate_mouse_button(msg, wparam);
 		ev.mouse.point.x = GET_X_LPARAM(lparam);
 		ev.mouse.point.y = GET_Y_LPARAM(lparam);
 		sysui_push_event(ev.hfrom, &ev);
@@ -405,6 +477,15 @@ dg_sysui sysui_window_create(dg_sysui hparent, const char* ptitle, long x, long 
 		return NULL;
 	}
 
+	/* allocate window data */
+	sysui_window_data_t* pdata = DG_NEW(sysui_window_data_t);
+	if (!pdata) {
+		DestroyWindow(hwindow);
+		return NULL;
+	}
+	pdata->flags = WF_NONE;
+	SetWindowLongPtr((HWND)hwindow, 0, pdata);
+
 	UpdateWindow((HWND)hwindow);
 	ShowWindow((HWND)hwindow, SW_SHOW);
 #else
@@ -424,11 +505,6 @@ int sysui_window_set_title(dg_sysui hwindow, const char* ptitle)
 {
 	SetWindowTextA((HWND)hwindow, ptitle);
 	return 0;
-}
-
-inline sysui_window_data_t* win32_window_data(dg_sysui hwindow)
-{
-	return (sysui_window_data_t*)GetWindowLongPtr(hwindow, 0);
 }
 
 void* sysui_window_set_userdata(dg_sysui hwindow, uint32_t slot, const void* pdata)

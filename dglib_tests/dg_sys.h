@@ -92,6 +92,7 @@ DG_API int sysui_get_info(dg_sysui_info_t *pdst, dg_sysui handle);
 enum DG_SYSUI_EVENT {
 	SYSUI_EVENT_SPAWN=0, /*< window spawned */
 	SYSUI_EVENT_DIE, /*< window must be die */
+	SYSUI_EVENT_CLOSE, /*< window is closing */
 	SYSUI_EVENT_RESIZE, /*< window resized */
 	SYSUI_EVENT_ENTERFOCUS, /*< keyboard focus entered */
 	SYSUI_EVENT_LEAVEFOCUS, /*< keyboard focus leaved */
@@ -122,22 +123,18 @@ typedef struct dg_sysui_mouseevt_s {
 	dg_sysui_point_t point;
 } dg_sysui_mouseevt_t;
 
-typedef struct dg_sysui_sizeevt_s {
-	dg_sysui_size_t  size;
-} dg_sysui_sizeevt_t;
-
 /**
 * @brief events structure
 */
-typedef union dg_sysui_event_s {
-	struct {
-		uint32_t evt;
-		dg_sysui hfrom;
+typedef struct dg_sysui_event_s {
+	uint32_t evt;
+	dg_sysui hfrom;
+	union { 
+		dg_sysui_keyevt_t   key;
+		dg_sysui_mouseevt_t mouse;
+		dg_sysui_size_t     size;
+		dg_sysui_rect_t     rect;
 	};
-	dg_sysui_keyevt_t   key;
-	dg_sysui_mouseevt_t mouse;
-	dg_sysui_sizeevt_t  size;
-	dg_sysui_rect_t     rect;
 } dg_sysui_event_t;
 
 #define DG_SYSUI_SLONG_BITS (sizeof(long)*8-1)

@@ -9,7 +9,7 @@
 #define DGMM_CLEAR (1<<1)
 
 /**
-* dg_alloc_dt_t
+* dg_memmgr_dt_t
 * memory allocation dispatch table
 */
 typedef struct dg_memmgr_dt_s {
@@ -19,7 +19,35 @@ typedef struct dg_memmgr_dt_s {
 	int   (*mem_free_debug)(void* pmem, const char* pfile, int line);
 } dg_memmgr_dt_t;
 
-extern dg_memmgr_dt_t *gpmmdt;
+DG_API dg_memmgr_dt_t* mm_get_dt();
+
+typedef dg_voidptr_t dg_ma_heap_t;
+
+typedef struct ma_heap_info_s {
+	size_t heap_size;
+	size_t heap_reserve;
+	size_t min_address;
+	size_t max_address;
+} ma_heap_info_t;
+
+DG_API int          ma_create_heap(dg_ma_heap_t *pdst, const ma_heap_info_t *pheapinfo, const char *pname);
+DG_API dg_ma_heap_t ma_find_heap(const char* pname);
+DG_API int          ma_destroy_heap(dg_ma_heap_t hheap);
+DG_API int          ma_thread_set_heap(dg_ma_heap_t hheap);
+DG_API dg_ma_heap_t ma_get_process_heap();
+DG_API dg_ma_heap_t ma_thread_get_heap();
+DG_API void        *ma_alloc(void *pblock, size_t size, uint32_t flags);
+DG_API void        *ma_allocdbg(void *pblock, size_t size, uint32_t flags, const char* pfile, int line);
+DG_API int          ma_free(void* pblock);
+DG_API int          ma_freedbg(void* pblock, const char* pfile, int line);
+
+typedef struct ma_stats_s {
+	size_t heaps;
+	size_t total_bytes;
+	size_t total_allocs;
+} ma_stats_t;
+
+DG_API int  ma_stats(ma_stats_t *pdst);
 
 /* mem override */
 #ifndef DG_MEMNOVERRIDE

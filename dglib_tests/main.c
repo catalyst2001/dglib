@@ -2,20 +2,18 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "dg_darray.h"
-#include "dg_list.h"
-#include "dg_queue.h"
-#include "dg_cpuinfo.h"
-#include "dg_dt.h"
-#include "dg_handle.h"
-#include "dg_bitvec.h"
-#include "dg_thread.h"
-#include "dg_threadpool.h"
-#include "dg_string.h"
-#include "dg_random.h"
-#include "dg_sys.h"
-
-#include "dg_main.h"
+#include <dg_darray.h>
+#include <dg_list.h>
+#include <dg_queue.h>
+#include <dg_cpuinfo.h>
+#include <dg_dt.h>
+#include <dg_handle.h>
+#include <dg_bitvec.h>
+#include <dg_thread.h>
+#include <dg_threadpool.h>
+#include <dg_string.h>
+#include <dg_random.h>
+#include <dg_sys.h>
 
 #define DG_MEMNOVERRIDE
 #include "dg_alloc.h"
@@ -342,11 +340,6 @@ void post_thread_proc(struct dg_thrd_data_s* ptinfo)
 bool test_threads()
 {
   int result;
-  if (!initialize_threads()) {
-    printf("init_thread_subsystem() failed!\n");
-    return false;
-  }
-
   dg_thrd_data_t* pthread_data = dg_get_curr_thread_data();
   if (pthread_data) {
     printf("dg_get_curr_thread_data() unexpected behaviour! returned address 0x%p. Must be NULL\n",
@@ -415,12 +408,6 @@ bool test_threadpool()
 {
   int             status;
   dg_threadpool_t threadpool;
-
-  if (!initialize_threads()) {
-    printf("init_thread_subsystem() failed!\n");
-    return false;
-  }
-
   status = tp_init(&threadpool, 16);
   if (status != DGERR_SUCCESS) {
     printf("threadpool_init() failed with status %d\n", status);

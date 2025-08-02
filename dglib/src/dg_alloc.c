@@ -39,7 +39,7 @@ int win32_mem_free(void* pmem) {
     if (!hheap) {
       dwerror = GetLastError();
       DG_ERROR("win32_mem_alloc(): GetProcessHeap() failed! GetLastError()=%d (0x%x)", dwerror, dwerror);
-      return NULL;
+      return DGERR_UNKNOWN_ERROR;
     }
     
     if (!HeapFree(hheap, 0, pmem)) {
@@ -73,10 +73,18 @@ int win32_mem_free_debug(void* pmem, const char* pfile, int line) {
 #endif
 
 dg_memmgr_dt_t glob_allocdt = {
+#ifdef _WIN32
+  .mem_alloc = win32_mem_alloc,
+  .mem_alloc_debug = win32_mem_alloc_debug,
+  .mem_free = win32_mem_free,
+  .mem_free_debug = win32_mem_free_debug
+#else
+  /* TODO: K.D. add linux impls */
   .mem_alloc = 0,
   .mem_alloc_debug = 0,
   .mem_free = 0,
   .mem_free_debug = 0
+#endif
 };
 
 int initialize_memory()
@@ -98,7 +106,7 @@ int ma_create_heap(dg_ma_heap_t* pdst, const ma_heap_info_t* pheapinfo, const ch
 
 DG_API dg_ma_heap_t ma_find_heap(const char* pname)
 {
-  return DG_API dg_ma_heap_t();
+  return NULL;
 }
 
 int ma_destroy_heap(dg_ma_heap_t hheap)
@@ -113,32 +121,32 @@ int ma_thread_set_heap(dg_ma_heap_t hheap)
 
 dg_ma_heap_t ma_get_process_heap()
 {
-  return dg_ma_heap_t();
+  return NULL;
 }
 
 dg_ma_heap_t ma_thread_get_heap()
 {
-  return dg_ma_heap_t();
+  return NULL;
 }
 
 void* ma_alloc(void* pblock, size_t size, uint32_t flags)
 {
-  return nullptr;
+  return glob_allocdt.mem_alloc(pblock, size, flags);
 }
 
 void* ma_allocdbg(void* pblock, size_t size, uint32_t flags, const char* pfile, int line)
 {
-  return nullptr;
+  return glob_allocdt.mem_alloc_debug(pblock, size, flags, pfile, line);
 }
 
 int ma_free(void* pblock)
 {
-  return 0;
+  return glob_allocdt.mem_free(pblock);
 }
 
 int ma_freedbg(void* pblock, const char* pfile, int line)
 {
-  return 0;
+  return glob_allocdt.mem_free_debug(pblock, pfile, line);
 }
 
 int ma_stats(ma_stats_t* pdst)

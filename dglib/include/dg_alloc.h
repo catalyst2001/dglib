@@ -52,15 +52,15 @@ DG_API int  ma_stats(ma_stats_t *pdst);
 /* mem override */
 #ifndef DG_MEMNOVERRIDE
 #ifdef _DEBUG
-#define malloc(size) (gpmmdt->mem_alloc_debug(NULL, size, DGMM_NONE, __FILE__, __LINE__))
-#define calloc(count, size) (gpmmdt->mem_alloc_debug(NULL, size * count, DGMM_CLEAR, __FILE__, __LINE__))
-#define realloc(ptr, size) (gpmmdt->mem_alloc_debug(ptr, size, DGMM_COPY, __FILE__, __LINE__))
-#define free(ptr) (gpmmdt->mem_free_debug(ptr, __FILE__, __LINE__))
+#define malloc(size) (ma_allocdbg(NULL, size, DGMM_NONE, __FILE__, __LINE__))
+#define calloc(count, size) (ma_allocdbg(NULL, size * count, DGMM_CLEAR, __FILE__, __LINE__))
+#define realloc(ptr, size) (ma_allocdbg(ptr, size, DGMM_COPY, __FILE__, __LINE__))
+#define free(ptr) (ma_freedbg(ptr, __FILE__, __LINE__))
 #else
-#define malloc(size) (gpmmdt->mem_alloc(NULL, size, DGMM_NONE))
-#define calloc(count, size) (gpmmdt->mem_alloc(NULL, size*count, DGMM_CLEAR))
-#define realloc(ptr, size) (gpmmdt->mem_alloc(ptr, size, DGMM_COPY))
-#define free(ptr) (gpmmdt->mem_free(ptr))
+#define malloc(size) (ma_alloc(NULL, size, DGMM_NONE))
+#define calloc(count, size) (ma_alloc(NULL, size*count, DGMM_CLEAR))
+#define realloc(ptr, size) (ma_alloc(ptr, size, DGMM_COPY))
+#define free(ptr) (ma_free(ptr))
 #endif
 #endif
 

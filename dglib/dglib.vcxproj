@@ -19,55 +19,41 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dg_alloc.h" />
-    <ClInclude Include="dg_atomic.h" />
-    <ClInclude Include="dg_bitvec.h" />
-    <ClInclude Include="dg_bswap.h" />
-    <ClInclude Include="dg_cpuinfo.h" />
-    <ClInclude Include="dg_darray.h" />
-    <ClInclude Include="dg_dt.h" />
-    <ClInclude Include="dg_filesystem.h" />
-    <ClInclude Include="dg_handle.h" />
-    <ClInclude Include="dg_libcommon.h" />
-    <ClInclude Include="dg_linalloc.h" />
-    <ClInclude Include="dg_list.h" />
-    <ClInclude Include="dg_main.h" />
-    <ClInclude Include="dg_path.h" />
-    <ClInclude Include="dg_queue.h" />
-    <ClInclude Include="dg_random.h" />
-    <ClInclude Include="dg_string.h" />
-    <ClInclude Include="dg_sync.h" />
-    <ClInclude Include="dg_sys.h" />
-    <ClInclude Include="dg_term.h" />
-    <ClInclude Include="dg_thread.h" />
-    <ClInclude Include="dg_threadpool.h" />
-    <ClInclude Include="dg_time.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="dg_alloc.c" />
-    <ClCompile Include="dg_atomic.c" />
-    <ClCompile Include="dg_bitvec.c" />
-    <ClCompile Include="dg_cpuinfo.c" />
-    <ClCompile Include="dg_darray.c" />
-    <ClCompile Include="dg_dt.c" />
-    <ClCompile Include="dg_filesystem.c" />
-    <ClCompile Include="dg_handle.c" />
-    <ClCompile Include="dg_linalloc.c" />
-    <ClCompile Include="dg_list.c" />
-    <ClCompile Include="dg_main.c" />
-    <ClCompile Include="dg_path.c" />
-    <ClCompile Include="dg_queue.c" />
-    <ClCompile Include="dg_random.c" />
-    <ClCompile Include="dg_string.c" />
-    <ClCompile Include="dg_sync.c" />
-    <ClCompile Include="dg_sys.c" />
-    <ClCompile Include="dg_term.c" />
-    <ClCompile Include="dg_thread.c" />
-    <ClCompile Include="dg_threadpool.c" />
-    <ClCompile Include="dg_time.c" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="cpp.hint" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\dg_alloc.h" />
+    <ClInclude Include="include\dg_cpuinfo.h" />
+    <ClInclude Include="include\dg_filesystem.h" />
+    <ClInclude Include="include\dg_handle.h" />
+    <ClInclude Include="include\dg_linalloc.h" />
+    <ClInclude Include="include\dg_main.h" />
+    <ClInclude Include="include\dg_path.h" />
+    <ClInclude Include="include\dg_random.h" />
+    <ClInclude Include="include\dg_string.h" />
+    <ClInclude Include="include\dg_sync.h" />
+    <ClInclude Include="include\dg_sys.h" />
+    <ClInclude Include="include\dg_term.h" />
+    <ClInclude Include="include\dg_thread.h" />
+    <ClInclude Include="include\dg_threadpool.h" />
+    <ClInclude Include="include\dg_time.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\dg_alloc.c" />
+    <ClCompile Include="src\dg_cpuinfo.c" />
+    <ClCompile Include="src\dg_filesystem.c" />
+    <ClCompile Include="src\dg_handle.c" />
+    <ClCompile Include="src\dg_linalloc.c" />
+    <ClCompile Include="src\dg_main.c" />
+    <ClCompile Include="src\dg_path.c" />
+    <ClCompile Include="src\dg_random.c" />
+    <ClCompile Include="src\dg_string.c" />
+    <ClCompile Include="src\dg_sync.c" />
+    <ClCompile Include="src\dg_sys.c" />
+    <ClCompile Include="src\dg_term.c" />
+    <ClCompile Include="src\dg_thread.c" />
+    <ClCompile Include="src\dg_threadpool.c" />
+    <ClCompile Include="src\dg_time.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -121,6 +107,22 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IntDir>$(SolutionDir)\build\objs\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\build\$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IntDir>$(SolutionDir)\build\objs\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\build\$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)\build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\build\objs\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)\build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\build\objs\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -129,11 +131,14 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>./include;../dglib_static/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>dglib_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\build\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -146,11 +151,14 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>./include;../dglib_static/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>dglib_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\build\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -161,11 +169,14 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>./include;../dglib_static/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>dglib_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\build\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -178,11 +189,14 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>./include;../dglib_static/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>dglib_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\build\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

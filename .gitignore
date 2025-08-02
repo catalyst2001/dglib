@@ -4,3 +4,7 @@
 */docs
 /html
 /latex
+/.vs
+/build/objs
+/dglib/objs
+/dglib_static/objs

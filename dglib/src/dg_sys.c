@@ -70,6 +70,7 @@ static void sysin_init_keyremap()
 	glob_fwd_keyremap[vk] = sk;\
 	glob_bck_keyremap[sk] = vk;
 
+	MAPKEY(0, SKEY_UNKNOWN); //any undefined key
 	MAPKEY(VK_RETURN, SKEY_RETURN);
 	MAPKEY(VK_ESCAPE, SKEY_ESCAPE);
 	MAPKEY(VK_BACK, SKEY_BACKSPACE);
@@ -307,8 +308,11 @@ LRESULT CALLBACK win32_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 		if (lparam & ((LPARAM)1 << 30)) // key is repeating
 			ev.key.modifiers |= SYSKS_REPEAT;
 
-		glob_keyarray[ev.key.keycode] = SYSKS_PRESSED | (ev.key.modifiers & SYSKS_REPEAT);
-		sysui_push_event(ev.hfrom, &ev);
+		/* skip out of bounds keys */
+		if (ev.key.keycode < sizeof(glob_keyarray)) {
+			glob_keyarray[ev.key.keycode] = SYSKS_PRESSED | (ev.key.modifiers & SYSKS_REPEAT);
+			sysui_push_event(ev.hfrom, &ev);
+		}
 		return 0;
 
 	case WM_KEYUP:
@@ -316,8 +320,10 @@ LRESULT CALLBACK win32_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 		ev.key.keycode = (uint32_t)glob_fwd_keyremap[wparam];
 		ev.key.scancode = (lparam >> 16) & 0xFF;
 		ev.key.modifiers = SYSKS_RELEASED;
-		glob_keyarray[ev.key.keycode] = SYSKS_RELEASED;
-		sysui_push_event(ev.hfrom, &ev);
+		if (ev.key.keycode < sizeof(glob_keyarray)) {
+			glob_keyarray[ev.key.keycode] = SYSKS_RELEASED;
+			sysui_push_event(ev.hfrom, &ev);
+		}
 		return 0;
 
 	case WM_CHAR:
@@ -645,6 +651,9 @@ dg_sysui sysui_create_ex(const dg_sysui_create_info_ex_t* pcreateinfo)
 
 int sysui_set_size(dg_sysui handle, dg_sysui_size_t size)
 {
+
+
+
 	return 0;
 }
 
@@ -718,6 +727,33 @@ int sysui_send_msg(dg_sysui handle, int msg, const void* pdata)
 int sysui_get_info(dg_sysui_info_t* pdst, dg_sysui handle)
 {
 	return 0;
+}
+
+const char* sysui_event_to_string(uint32_t event)
+{
+#define CASESTR(x) case x: return #x;
+	switch (event) {
+		CASESTR(SYSUI_EVENT_SPAWN)
+		CASESTR(SYSUI_EVENT_DIE)
+		CASESTR(SYSUI_EVENT_CLOSE)
+		CASESTR(SYSUI_EVENT_RESIZE)
+		CASESTR(SYSUI_EVENT_ENTERFOCUS)
+		CASESTR(SYSUI_EVENT_LEAVEFOCUS)
+		CASESTR(SYSUI_EVENT_MOUSECLICK)
+		CASESTR(SYSUI_EVENT_MOUSEMOVE)
+		CASESTR(SYSUI_EVENT_MOUSEWHEEL)
+		CASESTR(SYSUI_EVENT_SCREENSTATE)
+		CASESTR(SYSUI_EVENT_SCREENSAVE)
+		CASESTR(SYSUI_EVENT_POWERSTATE)
+		CASESTR(SYSUI_EVENT_KEYDOWN)
+		CASESTR(SYSUI_EVENT_KEYUP)
+		CASESTR(SYSUI_EVENT_CHAR)
+		CASESTR(SYSUI_EVENT_STATECHANGE)
+		CASESTR(SYSUI_EVENT_DRAGFILE)
+		CASESTR(SYSUI_EVENT_XEVENT)
+	}
+#undef CASESTR
+	return "<Unknown event>";
 }
 
 /**

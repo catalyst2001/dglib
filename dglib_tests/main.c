@@ -567,8 +567,8 @@ bool test_sys()
         sysui_kill(pwindow);
         bcontinue = false;
         break;
-        //default:
-          //printf("received event: %d\n", evt.evt);
+        default:
+          printf("received event: %s\n", sysui_event_to_string(evt.evt));
       }
     }
 

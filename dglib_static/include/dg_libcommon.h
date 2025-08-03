@@ -10,13 +10,18 @@ typedef void* dg_voidptr_t;
 enum DGERR {
 	DGERR_SUCCESS = 0,
 	DGERR_FAILED,
+	DGERR_UNIMPLEMENTED,
 	DGERR_OUT_OF_MEMORY,
 	DGERR_INVALID_PARAM,
 	DGERR_UNKNOWN_ERROR,
 	DGERR_INCONSISTENT,
 	DGERR_TIMEOUT,
 	DGERR_OVERFLOWED,
-	DGERR_INVALID_HANDLE
+	DGERR_INVALID_HANDLE,
+	DGERR_INTERNAL_ERROR,
+	DGERR_LIMIT_EXCEEDED,
+	DGERR_BUFFER_TOO_SMALL,
+	DGERR_NOT_FOUND
 };
 
 #define DG_STR(x) #x
@@ -30,6 +35,7 @@ enum DGERR {
 #define DG_ALIGN_DOWN(x, a) (((x)/(a))*(a))
 #define DG_ALIGN_UP(x, a)   ((((x)+(a)-1)/(a))*(a))
 
+#define DG_ARRSIZE(x) (sizeof(x)/sizeof(x[0]))
 #define DG_CONST_STRLEN(name, str) enum { name=sizeof(str)-1 }
 
 #define DG_INRANGE(x, a, b) (x >= a && x <= b)

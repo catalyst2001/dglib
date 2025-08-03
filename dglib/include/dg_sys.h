@@ -1,5 +1,12 @@
-/**
-*/
+/*===============================
+ "Diggy Gods" Team  Copyright (c) 2025.
+ Abstract: System routines abstraction layer
+ Purpose: Provides basic access to system routines for loading 
+  and unloading dynamic libraries, searching for symbol addresses, 
+  querying basic information about a dynamic library, 
+  and some functions for working with the system user interface.
+ Authors: Deryabin K.  Obidin N.
+===============================*/
 #pragma once
 #include "dg_libcommon.h"
 
@@ -20,7 +27,7 @@ DG_API int sys_dlopen(hdl_t *pdst, const char *ppath);
 DG_API int sys_dlclose(hdl_t *psrc);
 DG_API int sys_dlinfo(dg_dlinfo_t *pdst, hdl_t hmodule);
 DG_API int sys_dlsym(void **pdst, hdl_t hmodule, const char *psymname);
-DG_API int sys_dlenum(hdl_t *pdsthmodules, size_t maxlen);
+DG_API int sys_dlenum(hdl_t *pdstdls, size_t maxlen);
 
 typedef struct sys_dl_dt_s {
 	int (*psys_dlopen)(hdl_t* pdst, const char* ppath);
@@ -35,7 +42,7 @@ DG_API sys_dl_dt_t* sys_get_module_api_dt();
 /*
 ===============================
           System UI abstraction API
-For different systems, it is sometimes necessary to create standard 
+ For different systems, it is sometimes necessary to create standard 
 controls or windows to build a primitive user interface.
 This API should provide all the basic functionality for working with the 
 system UI to display the user interface based on the operating system UI.
@@ -60,11 +67,42 @@ typedef struct dg_sysui_create_info_ex_s {
 	const char*     pname;
 	dg_sysui_rect_t rect;
 	uint32_t        id;
+	uint32_t        widgetid;
 	void*           pexstruct;
 	size_t          exstruct_size;
 } dg_sysui_create_info_ex_t;
 
 DG_API dg_sysui sysui_create_ex(const dg_sysui_create_info_ex_t *pcreateinfo);
+
+/**
+* @brief 
+* 
+* 
+* 
+*/
+static inline dg_sysui sysui_create_button(dg_sysui hparent, 
+	long id, const char *ptext, long x, long y, long w, long h, long flags) {
+	enum { WIDGETID_BUTTON = 1 };
+	struct dg_sysui_button_s {
+		long flags;
+		const char* pbutton_name;
+	}
+	button_descriptor = {
+		.pbutton_name = ptext,
+		.flags=flags
+	};
+
+	dg_sysui_create_info_ex_t widget_desctiptor = {
+		.hparent=hparent,
+		.id = id,
+		.widgetid = WIDGETID_BUTTON,
+		.pname = "sysui_button",
+		.pexstruct=&button_descriptor,
+		.exstruct_size=sizeof(button_descriptor)
+	};
+	return sysui_create_ex(&widget_desctiptor);
+}
+
 DG_API int      sysui_set_size(dg_sysui handle, dg_sysui_size_t size);
 DG_API int      sysui_get_size(dg_sysui_size_t *pdst, dg_sysui handle);
 DG_API int      sysui_set_state(dg_sysui handle, int state);
@@ -109,6 +147,8 @@ enum DG_SYSUI_EVENT {
 	SYSUI_EVENT_DRAGFILE, /* < window received file in drag-n-drop */
 	SYSUI_EVENT_XEVENT, /* reserved */
 };
+
+DG_API const char* sysui_event_to_string(uint32_t event);
 
 typedef struct dg_sysui_keyevt_s {
 	uint32_t scancode;
@@ -163,11 +203,11 @@ DG_API int      sysin_get_key_state(int keycode);
 #define SYSKS_RELEASED  (0) /*< key is released */
 #define SYSKS_PRESSED   (1 << 1) /*< key is pressed */
 #define SYSKS_REPEAT    (1 << 0) /*< key repeat */
-#define SYSKS_RIGHT     (1 << 2) /*< if not set, pressed left key otherwise right */
+#define SYSKS_RIGHT     (1 << 2) /*< right or left key */
 
 enum DG_SYSKEY {
 	/* special */
-	SKEY_RETURN=0, SKEY_ESCAPE, SKEY_BACKSPACE, SKEY_TAB, SKEY_SPACE,
+	SKEY_RETURN, SKEY_ESCAPE, SKEY_BACKSPACE, SKEY_TAB, SKEY_SPACE,
 	SKEY_LEFT, SKEY_RIGHT, SKEY_UP, SKEY_DOWN,
 	SKEY_INSERT, SKEY_DELETE, SKEY_HOME, SKEY_END, SKEY_PAGEUP, SKEY_PAGEDOWN,
 	SKEY_SHIFT, SKEY_CONTROL, SKEY_ALT,

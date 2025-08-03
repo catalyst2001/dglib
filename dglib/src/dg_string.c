@@ -502,12 +502,13 @@ dg_wchar_t* wcs_copy(dg_wchar_t* pdst, size_t dstlen, const dg_wchar_t* psrc, si
 	if (!pdst || !psrc || dstlen == 0)
 		return NULL;
 
-	size_t src_len = wcs_length(psrc);
-	size_t to_copy = (count == 0 ? src_len : count);
-	if (to_copy > dstlen - 1)
-		to_copy = dstlen - 1;
+	if(!count)
+		count = wcs_length(psrc);
 
-	mem_copy(pdst, psrc, to_copy * sizeof(*psrc));
-	pdst[to_copy] = 0x0000;
+	if (count > dstlen - 1)
+		count = dstlen - 1;
+
+	mem_copy(pdst, psrc, count * sizeof(*psrc));
+	pdst[count] = 0x0000;
 	return pdst;
 }

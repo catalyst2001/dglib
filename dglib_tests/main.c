@@ -230,7 +230,7 @@ bool test_handles()
   }
 
   /* alloc handle */
-  handle_t           opened_handle;
+  dg_handle_t           opened_handle;
   dg_halloc_result_t allocated;
   if (!ha_alloc_handle(&allocated, &allocator)) {
     printf("ha_alloc_handle() failed\n");
@@ -240,11 +240,11 @@ bool test_handles()
   *((int*)allocated.phandle_body) = 1000;
   ha_free_handle(&allocator, opened_handle);
 
-  dg_darray_t opened_handles = darray_init(handle_t, 1024, 1024, 0);
+  dg_darray_t opened_handles = darray_init(dg_handle_t, 1024, 1024, 0);
   for (size_t i = 0; i < 512; i++) {
     if (ha_alloc_handle(&allocated, &allocator)) {
       //printf("allocated handle: %");
-      handle_t handle = allocated.new_handle;
+      dg_handle_t handle = allocated.new_handle;
       if (!darray_push_back(&opened_handles, &handle)) {
         printf("darray_push_back() failed!");
         return false;
@@ -258,7 +258,7 @@ bool test_handles()
 
   printf("=============== list handles ===============\n");
   for (size_t i = 0; i < darray_get_size(&opened_handles); i++) {
-    handle_t value = darray_get(&opened_handles, i, handle_t);
+    dg_handle_t value = darray_get(&opened_handles, i, dg_handle_t);
     printf("[handle %zd] idx: %u  gen: %u\n", i, value.index, value.gen);
     if (!ha_free_handle(&allocator, value)) {
       printf("\n");

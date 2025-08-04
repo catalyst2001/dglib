@@ -14,6 +14,7 @@
 #include <dg_string.h>
 #include <dg_random.h>
 #include <dg_sys.h>
+#include <dg_filesystem.h>
 
 #define DG_MEMNOVERRIDE
 #include "dg_alloc.h"
@@ -581,6 +582,187 @@ bool test_sys()
   return true;
 }
 
+bool test_filesystem()
+{
+  printf("=== Filesystem Abstraction Tests ===\n");
+
+  // 2. searchpath
+  int res = fs_add_search_path("cwd", L".", 0);
+  if (res != 0 && res != 1) {
+    printf("FAIL: fs_add_search_path() returned %d\n", res);
+    return false;
+  }
+  printf("PASS: fs_add_search_path()\n");
+
+  dg_pathid_t pid = fs_get_path_id("cwd");
+  if (pid.hvalue == DG_INVALID_HANDLE.hvalue) {
+    printf("FAIL: fs_get_path_id() returned invalid handle\n");
+    return false;
+  }
+  printf("PASS: fs_get_path_id()\n");
+
+  dg_path_t tmp_path;
+  if (!fs_get_path_by_id(&tmp_path, pid)) {
+    printf("FAIL: fs_get_path_by_id() failed\n");
+    return false;
+  }
+  wprintf(L"  Search path: %ls\n", tmp_path.pstring);
+  path_free(&tmp_path);
+
+  // 3. memory buffer
+  char membuf[32] = { 0 };
+  dg_file_t fh;
+  res = fs_open_buffer(&fh, membuf, sizeof(membuf), FS_BIN, FS_W | FS_R);
+  if (res != 0) {
+    printf("FAIL: fs_open_buffer() returned %d\n", res);
+    return false;
+  }
+
+  size_t wn = 0;
+  if (fs_write(fh, "Hello", 5, &wn) != 0 || wn != 5) {
+    printf("FAIL: fs_write(buffer) wrote %zu bytes\n", wn);
+    return false;
+  }
+  printf("PASS: fs_write(buffer)\n");
+
+  if (fs_seek(fh, 0, FS_SET) != 0) {
+    printf("FAIL: fs_seek(buffer)\n");
+    return false;
+  }
+
+  char outbuf[32] = { 0 };
+  size_t rn = 0;
+  if (fs_read(outbuf, 5, fh, &rn) != 0 || rn != 5) {
+    printf("FAIL: fs_read(buffer) read %zu bytes\n", rn);
+    return false;
+  }
+  if (memcmp(outbuf, "Hello", 5) != 0) {
+    printf("FAIL: buffer content mismatch: \"%.*s\"\n", (int)rn, outbuf);
+    return false;
+  }
+  printf("PASS: fs_read(buffer)\n");
+  fs_close(fh);
+
+  // 4. file operations
+  const wchar_t* fname = L"testfile.bin";
+  res = fs_open_file(&fh, pid, fname, FS_BIN, FS_W | FS_TRUNC);
+  if (res != 0) {
+    printf("FAIL: fs_open_file(write) returned %d\n", res);
+    return false;
+  }
+  if (fs_write(fh, "DATA", 4, &wn) != 0 || wn != 4) {
+    printf("FAIL: fs_write(file) wrote %zu bytes\n", wn);
+    return false;
+  }
+  fs_close(fh);
+  printf("PASS: fs_write(file)\n");
+
+  res = fs_open_file(&fh, pid, fname, FS_BIN, FS_R);
+  if (res != 0) {
+    printf("FAIL: fs_open_file(read) returned %d\n", res);
+    return false;
+  }
+  memset(outbuf, 0, sizeof(outbuf));
+  if (fs_read(outbuf, 8, fh, &rn) != 0 || rn != 4) {
+    printf("FAIL: fs_read(file) read %zu bytes\n", rn);
+    return false;
+  }
+  if (memcmp(outbuf, "DATA", 4) != 0) {
+    printf("FAIL: file content mismatch: \"%.*s\"\n", (int)rn, outbuf);
+    return false;
+  }
+  fs_close(fh);
+  printf("PASS: fs_read(file)\n");
+
+  // 5. read/write strings
+  const wchar_t* sfile = L"teststring.txt";
+  res = fs_open_file(&fh, pid, sfile, FS_BIN, FS_W | FS_TRUNC);
+  if (res != 0) {
+    printf("FAIL: fs_open_file(string write) returned %d\n", res);
+    return false;
+  }
+  if (fs_write_string(fh, "Line123", 0) != 0) {
+    printf("FAIL: fs_write_string()\n");
+    return false;
+  }
+  fs_close(fh);
+
+  res = fs_open_file(&fh, pid, sfile, FS_BIN, FS_R);
+  if (res != 0) {
+    printf("FAIL: fs_open_file(string read) returned %d\n", res);
+    return false;
+  }
+  char strbuf[32];
+  const char* ret = fs_read_string(strbuf, sizeof(strbuf), 0, fh);
+  if (!ret || strcmp(strbuf, "Line123") != 0) {
+    printf("FAIL: fs_read_string() got \"%s\"\n", strbuf);
+    return false;
+  }
+  fs_close(fh);
+  printf("PASS: fs_write_string()/fs_read_string()\n");
+
+  // 6. seek/tell
+  const wchar_t* seekfile = L"testseek.bin";
+  res = fs_open_file(&fh, pid, seekfile, FS_BIN, FS_W | FS_TRUNC);
+  fs_write(fh, "ABCDE", 5, NULL);
+  fs_close(fh);
+
+  res = fs_open_file(&fh, pid, seekfile, FS_BIN, FS_R);
+  fs_seek(fh, 2, FS_SET);
+  int64_t pos = fs_tell(fh);
+  if (pos != 2) {
+    printf("FAIL: fs_tell() = %lld\n", (long long)pos);
+    return false;
+  }
+  fs_close(fh);
+  printf("PASS: fs_seek()/fs_tell()\n");
+
+  // 7. Чтение/запись с байт-свапом
+  const wchar_t* bsfile = L"testbs.bin";
+  res = fs_open_file(&fh, pid, bsfile, FS_BIN, FS_W | FS_TRUNC);
+  fs_write_s16(fh, 0x1234, FS_BE);
+  fs_write_u32(fh, 0x89ABCDEF, FS_LE);
+  fs_close(fh);
+
+  res = fs_open_file(&fh, pid, bsfile, FS_BIN, FS_R);
+  int32_t v16; uint32_t v32;
+  fs_read_s16(&v16, fh, FS_BE);
+  fs_read_u32(&v32, fh, FS_LE);
+  fs_close(fh);
+  if (v16 != 0x1234 || v32 != 0x89ABCDEF) {
+    printf("FAIL: byte-swap mismatch: 0x%04X / 0x%08X\n", v16, v32);
+    return false;
+  }
+  printf("PASS: fs_read_s*/fs_write_s*\n");
+
+  // 8. dir
+  hdir_t dh;
+  res = fs_dir_open(&dh, pid, L".");
+  if (res != 0) {
+    printf("FAIL: fs_dir_open() returned %d\n", res);
+    return false;
+  }
+  printf("Directory listing:\n");
+  dg_dirent_t ent;
+  while (fs_dir_read(&ent, dh) == 0) {
+    wprintf(L"  %ls\n", ent.filename);
+  }
+  printf("Press any key to continue...\n");
+  getchar();
+
+  fs_dir_close(&dh);
+  printf("PASS: fs_dir_open/fs_dir_read/fs_dir_close()\n");
+
+  // Cleanup
+  fs_remove(pid, fname);
+  fs_remove(pid, sfile);
+  fs_remove(pid, seekfile);
+  fs_remove(pid, bsfile);
+
+  printf("=== All tests passed ===\n");
+  return true;
+}
+
 #define RUN_TEST(func, failmsg) do {\
 	if(!func()) {\
 		printf(failmsg "\n");\
@@ -606,10 +788,8 @@ int main()
   //RUN_TEST(test_threads, "threads testing failed!")
   //RUN_TEST(test_threadpool, "threads pool testing failed!")
   //RUN_TEST(test_strings, "string testing failed!")
-  RUN_TEST(test_sys, "sys testing failed!")
-
-
-
-    dg_deinitialize();
+  //RUN_TEST(test_sys, "sys testing failed!")
+  RUN_TEST(test_filesystem, "filesystem testing failed!")
+  dg_deinitialize();
   return 0;
 }

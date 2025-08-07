@@ -1,10 +1,10 @@
-/.vs
-/dglib_tests/docs
+*/.vs
+*/x64/Debug
+*/x64/Release
+*/docs
 /html
 /latex
-/dglib_tests/x64
-/dglib_static/x64
-/dglib_static/objs
-/dglib/x64
+/.vs
+/build/objs
 /dglib/objs
-/build
+/dglib_static/objs

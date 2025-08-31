@@ -9,21 +9,21 @@ typedef struct dg_darray_s {
   uint8_t* pdata;
 } dg_darray_t;
 
-#define darray_init_default(type) ((dg_darray_t){\
-    .elemsize = sizeof(type),                   \
-    .capacity = 1,                              \
-    .reserve = 1,                               \
-    .size     = 0,                              \
-    .pdata    = NULL                            \
-})
+#define darray_init_default(type) {\
+    .elemsize = sizeof(type), \
+    .capacity = 1, \
+    .reserve  = 1, \
+    .size     = 0, \
+    .pdata    = NULL \
+}
 
-#define darray_init(type, cap, res, siz) ((dg_darray_t){\
-    .elemsize = sizeof(type),                   \
-    .capacity = cap,                            \
-    .reserve  = res,                            \
-    .size     = siz,                            \
-    .pdata    = NULL                            \
-})
+#define darray_init(type, cap, res, siz) {\
+    .elemsize = sizeof(type), \
+    .capacity = cap, \
+    .reserve  = res, \
+    .size     = siz, \
+    .pdata    = NULL \
+}
 
 #define darray_get_size(p)            ((p)->size)
 #define darray_get_capacity(p)       ((p)->capacity)

@@ -1,5 +1,14 @@
 #include "dg_string.h"
 #include "dg_alloc.h"
+#include "dg_linalloc.h"
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <stdio.h>
+#else
+//linux
+#endif
 
 int str_compare(const char* a, const char* b, int casesensitive) {
 	if (!casesensitive) {
@@ -382,6 +391,35 @@ int mem_compare(const void* a, const void* b, size_t count)
 	return 0;
 }
 
+const char* str_format(char* pdst, size_t dstlen, const char* pformat, ...)
+{
+	va_list argptr;
+	const char* pformated;
+	va_start(argptr, pformat);
+	pformated = str_vformat(pdst, dstlen, pformat, argptr);
+	va_end(argptr);
+	return pformated;
+}
+
+const char* str_vformat(char* pdst, size_t dstlen, const char* pformat, va_list argptr)
+{
+#ifdef _WIN32
+	/* dst buffer present? */
+	if (!pdst) {
+		pdst = la_hunk_alloc(dstlen, true);
+		if (!pdst) {
+			/* failed to alloc buffer */
+			return "";
+		}
+	}
+	vsnprintf(pdst, dstlen, pformat, argptr);
+	return pdst;
+#else
+	//TODO: K.D. "str_format" implement me
+	return "";
+#endif
+}
+
 bool dgstr_copy_from(dg_string_t* dst, const char* src) {
 	if (!dst)
 		return false;
@@ -502,7 +540,7 @@ dg_wchar_t* wcs_copy(dg_wchar_t* pdst, size_t dstlen, const dg_wchar_t* psrc, si
 	if (!pdst || !psrc || dstlen == 0)
 		return NULL;
 
-	if(!count)
+	if (!count)
 		count = wcs_length(psrc);
 
 	if (count > dstlen - 1)
@@ -511,4 +549,213 @@ dg_wchar_t* wcs_copy(dg_wchar_t* pdst, size_t dstlen, const dg_wchar_t* psrc, si
 	mem_copy(pdst, psrc, count * sizeof(*psrc));
 	pdst[count] = 0x0000;
 	return pdst;
+}
+
+#ifndef _WIN32
+static inline uint32_t utf8_decode_cp(const unsigned char* s, size_t* adv)
+{
+	uint32_t cp;
+	unsigned char c = s[0];
+
+	if (c < 0x80) { *adv = 1; return c; }
+
+	// 2-byte
+	if ((c & 0xE0) == 0xC0) {
+		unsigned char c1 = s[1];
+		if ((c1 & 0xC0) != 0x80) { *adv = 1; return 0xFFFD; }
+		cp = ((c & 0x1F) << 6) | (c1 & 0x3F);
+		if (cp < 0x80) { *adv = 1; return 0xFFFD; } // overlong
+		*adv = 2; return cp;
+	}
+
+	// 3-byte
+	if ((c & 0xF0) == 0xE0) {
+		unsigned char c1 = s[1], c2 = s[2];
+		if (((c1 | c2) & 0xC0) != 0x80) { *adv = 1; return 0xFFFD; }
+		cp = ((c & 0x0F) << 12) | ((c1 & 0x3F) << 6) | (c2 & 0x3F);
+		if (cp < 0x800 || (cp >= 0xD800 && cp <= 0xDFFF)) { *adv = 1; return 0xFFFD; } // overlong/surrogate
+		*adv = 3; return cp;
+	}
+
+	// 4-byte
+	if ((c & 0xF8) == 0xF0) {
+		unsigned char c1 = s[1], c2 = s[2], c3 = s[3];
+		if (((c1 | c2 | c3) & 0xC0) != 0x80) { *adv = 1; return 0xFFFD; }
+		cp = ((c & 0x07) << 18) | ((c1 & 0x3F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
+		if (cp < 0x10000 || cp > 0x10FFFF) { *adv = 1; return 0xFFFD; } // overlong/out of range
+		*adv = 4; return cp;
+	}
+
+	*adv = 1; return 0xFFFD;
+}
+
+static inline size_t utf16_units_for_cp(uint32_t cp) {
+	return (cp <= 0xFFFF) ? 1u : 2u;
+}
+
+static inline size_t utf8_bytes_for_cp(uint32_t cp) {
+	if (cp <= 0x7F) return 1;
+	if (cp <= 0x7FF) return 2;
+	if (cp <= 0xFFFF) return 3;
+	return 4;
+}
+
+static inline void utf16_write_cp(dg_wchar_t* dst, size_t* out, size_t cap, uint32_t cp)
+{
+	if (cp <= 0xFFFF) {
+		if (*out < cap) dst[(*out)++] = (dg_wchar_t)cp;
+	}
+	else {
+		if (*out + 1 < cap) {
+			cp -= 0x10000;
+			dst[(*out)++] = (dg_wchar_t)(0xD800 | (cp >> 10));
+			dst[(*out)++] = (dg_wchar_t)(0xDC00 | (cp & 0x3FF));
+		}
+	}
+}
+
+static inline uint32_t utf16_read_cp(const dg_wchar_t* s, size_t len, size_t* adv)
+{
+	if (*adv >= len) return 0;
+	uint32_t w1 = s[*adv];
+	(*adv)++;
+	if (w1 >= 0xD800 && w1 <= 0xDBFF) { // high surrogate
+		if (*adv < len) {
+			uint32_t w2 = s[*adv];
+			if (w2 >= 0xDC00 && w2 <= 0xDFFF) {
+				(*adv)++;
+				uint32_t cp = 0x10000 + (((w1 - 0xD800) << 10) | (w2 - 0xDC00));
+				return cp;
+			}
+		}
+		return 0xFFFD; // unmatched high surrogate
+	}
+	if (w1 >= 0xDC00 && w1 <= 0xDFFF) {
+		return 0xFFFD; // stray low surrogate
+	}
+	return w1;
+}
+
+static inline void utf8_write_cp(char* dst, size_t* out, size_t cap, uint32_t cp)
+{
+	if (cp <= 0x7F) {
+		if (*out < cap) dst[(*out)++] = (char)cp;
+	}
+	else if (cp <= 0x7FF) {
+		if (*out + 1 < cap) {
+			dst[(*out)++] = (char)(0xC0 | (cp >> 6));
+			dst[(*out)++] = (char)(0x80 | (cp & 0x3F));
+		}
+	}
+	else if (cp <= 0xFFFF) {
+		if (*out + 2 < cap) {
+			dst[(*out)++] = (char)(0xE0 | (cp >> 12));
+			dst[(*out)++] = (char)(0x80 | ((cp >> 6) & 0x3F));
+			dst[(*out)++] = (char)(0x80 | (cp & 0x3F));
+		}
+	}
+	else {
+		if (*out + 3 < cap) {
+			dst[(*out)++] = (char)(0xF0 | (cp >> 18));
+			dst[(*out)++] = (char)(0x80 | ((cp >> 12) & 0x3F));
+			dst[(*out)++] = (char)(0x80 | ((cp >> 6) & 0x3F));
+			dst[(*out)++] = (char)(0x80 | (cp & 0x3F));
+		}
+	}
+}
+#endif /* !_WIN32 */
+
+int ansi_to_wide(dg_wchar_t* pdst, size_t dstcount, const char* psrc)
+{
+	if (!psrc)
+		return -1;
+
+#ifdef _WIN32
+	// required (includes NUL when cbMultiByte == -1)
+	int need = MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, psrc, -1, NULL, 0);
+	if (need <= 0)
+		return -1;
+
+	if (!pdst || dstcount == 0)
+		return need - 1; // without NUL
+
+	int written = MultiByteToWideChar(CP_ACP, 0, psrc, -1, (LPWSTR)pdst, (int)dstcount);
+	if (written <= 0)
+		return -1;
+
+	return written - 1; // exclude NUL
+#else
+	// treat "ANSI" as UTF-8
+	const unsigned char* s = (const unsigned char*)psrc;
+	// 1) measure
+	size_t need_units = 0;
+	while (*s) {
+		size_t adv = 0;
+		uint32_t cp = utf8_decode_cp(s, &adv);
+		need_units += utf16_units_for_cp(cp);
+		s += adv;
+	}
+	if (!pdst || dstcount == 0) return (int)need_units;
+
+	// 2) convert
+	size_t out = 0;
+	s = (const unsigned char*)psrc;
+	while (*s) {
+		if (out + 1 >= dstcount) break; // keep space for NUL (or room for surrogate pair below)
+		size_t adv = 0;
+		uint32_t cp = utf8_decode_cp(s, &adv);
+		size_t units = utf16_units_for_cp(cp);
+		if (out + units >= dstcount) break; // not enough room for full code point
+		utf16_write_cp(pdst, &out, dstcount - 1, cp); // -1 to guarantee room for NUL
+		s += adv;
+	}
+	pdst[out] = 0;
+	return (int)out;
+#endif
+}
+
+int wide_to_ansi(char* pdst, size_t dstcount, const dg_wchar_t* psrc)
+{
+	if (!psrc)
+		return -1;
+
+#ifdef _WIN32
+	int need = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)psrc, -1, NULL, 0, NULL, NULL);
+	if (need <= 0)
+		return -1;
+
+	if (!pdst || dstcount == 0)
+		return need - 1;
+
+	int written = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)psrc, -1, pdst, (int)dstcount, NULL, NULL);
+	if (written <= 0)
+		return -1;
+
+	return written - 1;
+#else
+	// treat psrc as UTF-16, encode to UTF-8
+	// 1) measure
+	size_t len16 = 0; while (psrc[len16] != 0) ++len16;
+	size_t i = 0, need_bytes = 0;
+	while (i < len16) {
+		size_t adv = i;
+		uint32_t cp = utf16_read_cp(psrc, len16, &adv);
+		i = adv;
+		need_bytes += utf8_bytes_for_cp(cp);
+	}
+	if (!pdst || dstcount == 0) return (int)need_bytes;
+
+	// 2) convert
+	size_t out = 0; i = 0;
+	while (psrc[i] && out + 1 < dstcount) {
+		size_t adv = i;
+		uint32_t cp = utf16_read_cp(psrc, (size_t)-1, &adv); // len not needed since we check NUL
+		i = adv;
+		size_t need = utf8_bytes_for_cp(cp);
+		if (out + need >= dstcount) break; // leave space for NUL or avoid overflow
+		utf8_write_cp(pdst, &out, dstcount - 1, cp);
+	}
+	pdst[out] = '\0';
+	return (int)out;
+#endif
 }

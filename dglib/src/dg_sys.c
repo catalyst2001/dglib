@@ -644,8 +644,58 @@ sys_dl_dt_t* sys_get_module_api_dt()
 	return &glob_moduledt;
 }
 
+const char* sys_get_cmdline()
+{
+#ifdef _WIN32
+	return GetCommandLineA();
+#else
+	return nullptr;
+#endif
+}
+
+void sys_pexit(int code)
+{
+	//TODO: K.D. Using CRT "exit"! change it later!
+	exit(code);
+}
+
+inline static UINT sysflags_to_win32_flags(int sysflags)
+{
+	UINT dst=0;
+	if (sysflags & SYS_ID_OK)
+		dst |= MB_OK;
+	if(sysflags & SYS_ID_CANCEL)
+		dst |= MB_OKCANCEL;
+	if (sysflags & MB_RETRYCANCEL)
+		dst |= MB_RETRYCANCEL;
+
+	return dst;
+}
+
+inline static int win32id_to_sysid(UINT win32flags)
+{
+	switch (win32flags) {
+	case IDOK: return SYS_ID_OK;
+	case IDCANCEL: return SYS_ID_CANCEL;
+	case IDRETRY: return SYS_ID_RETRY;
+	}
+	return SYS_ID_NONE;
+}
+
+int sys_show_msgbox(dg_sysui parent_window, const char* pcaption, const char* ptext, int flags)
+{
+#ifdef _WIN32
+	return win32id_to_sysid(MessageBoxA((HWND)parent_window, ptext, pcaption, sysflags_to_win32_flags(flags)));
+#else
+	return 0;
+#endif
+}
+
 dg_sysui sysui_create_ex(const dg_sysui_create_info_ex_t* pcreateinfo)
 {
+	
+
+
 	return NULL;
 }
 

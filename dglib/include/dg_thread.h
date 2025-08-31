@@ -71,7 +71,7 @@ typedef struct dg_thread_init_info_s {
 * @param pthreadinfo - struct with all information for thread creation
 * @return handle of created thread, otherwise returns NULL
 */
-DG_API dg_thrd_t dg_thread_create_ex(const dg_thread_init_info_t *pthreadinfo);
+DG_API dg_thrd_t thread_create_ex(const dg_thread_init_info_t *pthreadinfo);
 
 /**
 * @brief simple thread creation
@@ -80,34 +80,34 @@ DG_API dg_thrd_t dg_thread_create_ex(const dg_thread_init_info_t *pthreadinfo);
 * @param puserdata - address of user data
 * @return handle of created thread, otherwise returns NULL
 */
-DG_API dg_thrd_t dg_thread_create(uint32_t stacksize, dg_thrd_proc pthreadroutine, void *puserdata);
+DG_API dg_thrd_t thread_create(uint32_t stacksize, dg_thrd_proc pthreadroutine, void *puserdata);
 
 /**
 * @brief get current thread dglib data
 * @return If the thread was created by the dglib subsystem, the address of the thread description structure is returned.
 * @return If the thread was not created by dglib, NULL is returned.
 */
-DG_API dg_thrd_data_t* dg_get_curr_thread_data();
+DG_API dg_thrd_data_t* get_curr_thread_data();
 
 /**
 * @brief gets the handle to the current thread
 * @return Returns a handle to the current thread.
 * @return This function never returns NULL
 */
-DG_API dg_thrd_t dg_get_curr_thread();
+DG_API dg_thrd_t get_curr_thread();
 
 /**
 * @brief gets the id to the current thread
 * @return Returns a id to the current thread.
 */
-DG_API uint32_t dg_get_curr_thread_id();
+DG_API uint32_t get_curr_thread_id();
 
 /**
 * @brief Waits indefinitely for a thread to join.
 * @return If the thread has joined, DGERR_SUCCESS is returned
 * @return If an internal error occurs, DGERR_UNKNOWN_ERROR is returned
 */
-DG_API int dg_thread_join(dg_thrd_t hthread);
+DG_API int thread_join(dg_thrd_t hthread);
 
 /**
 * @brief close thread handle
@@ -117,7 +117,7 @@ DG_API int dg_thread_join(dg_thrd_t hthread);
 * @return If the thread completed within the specified time interval, DGERR_SUCCESS is returned.
 * @return If the thread fails to complete before the specified time, DGERR_TIMEOUT is returned.
 */
-DG_API bool dg_thread_close(dg_thrd_t hthread);
+DG_API bool thread_close(dg_thrd_t hthread);
 
 /**
 * @brief waiting for thread to join with timeout
@@ -127,7 +127,7 @@ DG_API bool dg_thread_close(dg_thrd_t hthread);
 * @return If the thread completed within the specified time interval, DGERR_SUCCESS is returned.
 * @return If the thread fails to complete before the specified time, DGERR_TIMEOUT is returned.
 */
-DG_API int dg_thread_join_timed(dg_thrd_t hthread, uint32_t timeout);
+DG_API int thread_join_timed(dg_thrd_t hthread, uint32_t timeout);
 
 /**
 * @brief gets the return value of the terminated thread
@@ -135,8 +135,8 @@ DG_API int dg_thread_join_timed(dg_thrd_t hthread, uint32_t timeout);
 * @return if an invalid thread handle is passed, returns DGERR_INVALID_PARAM.
 * @return Otherwise, DGERR_SUCCESS is returned.
 */
-DG_API int dg_thread_get_exit_code(int* pdst, dg_thrd_t hthread);
+DG_API int thread_get_exit_code(int* pdst, dg_thrd_t hthread);
 
 DG_API void dg_delay_ms(uint32_t delay);
 
-DG_API dg_thrd_data_t* dg_thread_attach_info(uint32_t flags, size_t linalloc_size);
+DG_API dg_thrd_data_t* thread_attach_info(uint32_t flags, size_t linalloc_size);

@@ -74,7 +74,7 @@ DWORD WINAPI win32_thread_proc(dg_thrd_data_t* pthread_data)
 	return (DWORD)return_value;
 }
 
-dg_thrd_t dg_thread_create_ex(const dg_thread_init_info_t* pthreadinfo)
+dg_thrd_t thread_create_ex(const dg_thread_init_info_t* pthreadinfo)
 {
 	DWORD           threadid;
 	HANDLE          hthread;
@@ -119,7 +119,7 @@ dg_thrd_t dg_thread_create_ex(const dg_thread_init_info_t* pthreadinfo)
 	return (dg_thrd_t)hthread;
 }
 
-dg_thrd_t dg_thread_create(uint32_t stacksize, dg_thrd_proc pthreadroutine, void* puserdata)
+dg_thrd_t thread_create(uint32_t stacksize, dg_thrd_proc pthreadroutine, void* puserdata)
 {
 	dg_thread_init_info_t tii = {
 		.affinity = DGT_AUTO_AFFINITY,
@@ -132,30 +132,30 @@ dg_thrd_t dg_thread_create(uint32_t stacksize, dg_thrd_proc pthreadroutine, void
 		.stack_size = stacksize,
 		.puserptr = puserdata
 	};
-	return dg_thread_create_ex(&tii);
+	return thread_create_ex(&tii);
 }
 
-dg_thrd_data_t* dg_get_curr_thread_data()
+dg_thrd_data_t* get_curr_thread_data()
 {
 	return TlsGetValue(glob_tls_index);
 }
 
-dg_thrd_t dg_get_curr_thread()
+dg_thrd_t get_curr_thread()
 {
 	return (dg_thrd_t)GetCurrentThread();
 }
 
-uint32_t dg_get_curr_thread_id()
+uint32_t get_curr_thread_id()
 {
 	return (uint32_t)GetCurrentThreadId();
 }
 
-int dg_thread_join(dg_thrd_t hthread)
+int thread_join(dg_thrd_t hthread)
 {
-	return dg_thread_join_timed(hthread, DGT_WAIT_INFINITE);
+	return thread_join_timed(hthread, DGT_WAIT_INFINITE);
 }
 
-bool dg_thread_close(dg_thrd_t hthread)
+bool thread_close(dg_thrd_t hthread)
 {
 	if (!hthread) {
 		assert(hthread && "hthread was NULL");
@@ -165,7 +165,7 @@ bool dg_thread_close(dg_thrd_t hthread)
 	return !!CloseHandle((HANDLE)hthread);
 }
 
-int dg_thread_join_timed(dg_thrd_t hthread, uint32_t timeout)
+int thread_join_timed(dg_thrd_t hthread, uint32_t timeout)
 {
 	if (!hthread) {
 		assert(hthread && "hthread was NULL");
@@ -193,7 +193,7 @@ int dg_thread_join_timed(dg_thrd_t hthread, uint32_t timeout)
 	return DGERR_UNKNOWN_ERROR;
 }
 
-int dg_thread_get_exit_code(int* pdst, dg_thrd_t hthread)
+int thread_get_exit_code(int* pdst, dg_thrd_t hthread)
 {
 	DWORD return_code;
 	if (!hthread) {
@@ -216,11 +216,11 @@ void dg_delay_ms(uint32_t delay)
 	Sleep((DWORD)delay);
 }
 
-dg_thrd_data_t* dg_thread_attach_info(uint32_t flags, size_t linalloc_size)
+dg_thrd_data_t* thread_attach_info(uint32_t flags, size_t linalloc_size)
 {
 	DWORD dwerror;
 	/* try to get current thread allocated info block */
-	dg_thrd_data_t* pthread_data = dg_get_curr_thread_data();
+	dg_thrd_data_t* pthread_data = get_curr_thread_data();
 	if (pthread_data)
 		return pthread_data;
 

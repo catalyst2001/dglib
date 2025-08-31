@@ -5,12 +5,12 @@
 
 int thread_pool_workers_entry(struct dg_thrd_data_s* ptinfo)
 {
-  printf("thread_pool_workers_entry(): thread %d from pool started\n", dg_get_curr_thread_id());
+  printf("thread_pool_workers_entry(): thread %d from pool started\n", get_curr_thread_id());
   dg_worker_t* pworker = (dg_worker_t*)ptinfo->puserdata;
   dg_threadpool_t* pthreadpool = pworker->ptpool;
   setjmp(pworker->start_context);//TODO: K.D. use this later
   while (dg_atomic_load(&pthreadpool->status) == DGTPSTATUS_RUNNING) {
-    printf("thread_pool_workers_entry() thread %u start execution\n", dg_get_curr_thread_id());
+    printf("thread_pool_workers_entry() thread %u start execution\n", get_curr_thread_id());
     dg_task_t *ptask = (dg_task_t*)mtqueue_get_front(&pthreadpool->tasks);
     ptask->pworker = pworker;
     ptask->tstart = 0.; //TODO: K.D. use this later
@@ -67,7 +67,7 @@ int tp_init(dg_threadpool_t* ptp, size_t num_threads)
     }
     pworker->ptpool = ptp;
     thread_init_info.puserptr = pworker;
-    pworker->hthread = dg_thread_create_ex(&thread_init_info);
+    pworker->hthread = thread_create_ex(&thread_init_info);
     if (!pworker->hthread) {
       DG_ERROR("threadpool_init(): thread_create() failed");
       return DGERR_OUT_OF_MEMORY;
@@ -127,7 +127,7 @@ int tp_deinit(dg_threadpool_t* ptp)
   tp_join(ptp);
   for (size_t i = 0; i < darray_get_size(&ptp->workers); i++) {
     pworker = darray_getptr(&ptp->workers, i, dg_worker_t);
-    dg_thread_close(pworker->hthread);
+    thread_close(pworker->hthread);
   }
   darray_free(&ptp->workers);
   mtqueue_free(&ptp->tasks);

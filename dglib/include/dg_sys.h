@@ -39,6 +39,10 @@ typedef struct sys_dl_dt_s {
 
 DG_API sys_dl_dt_t* sys_get_module_api_dt();
 
+DG_API const char* sys_get_cmdline();
+
+DG_API void sys_pexit(int code);
+
 /*
 ===============================
           System UI abstraction API
@@ -71,6 +75,16 @@ typedef struct dg_sysui_create_info_ex_s {
 	void*           pexstruct;
 	size_t          exstruct_size;
 } dg_sysui_create_info_ex_t;
+
+#define SYS_ID_NONE (0)
+#define SYS_ID_OK (1<<0)
+#define SYS_ID_CANCEL (1<<1)
+#define SYS_ID_RETRY (1<<2)
+
+#define SYS_MSGBOX_ERROR (1<<4)
+#define SYS_MSGBOX_INFO (1<<5)
+
+DG_API int sys_show_msgbox(dg_sysui parent_window, const char* pcaption, const char* ptext, int flags);
 
 DG_API dg_sysui sysui_create_ex(const dg_sysui_create_info_ex_t *pcreateinfo);
 

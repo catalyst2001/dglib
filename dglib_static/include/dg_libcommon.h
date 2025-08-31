@@ -41,6 +41,8 @@ enum DGERR {
 
 #define DG_INRANGE(x, a, b) (x >= a && x <= b)
 
+#define DG_UNUSED(x) ((void)x)
+
 /**
 * common declarations
 */

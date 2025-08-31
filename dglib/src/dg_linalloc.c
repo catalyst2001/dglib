@@ -2,7 +2,7 @@
 #include "dg_thread.h"
 
 #define LA_CURR_THREAD_DATA(varname, ...)\
-  dg_thrd_data_t *varname = dg_get_curr_thread_data();\
+  dg_thrd_data_t *varname = get_curr_thread_data();\
   if (!varname)\
     return __VA_ARGS__;
 

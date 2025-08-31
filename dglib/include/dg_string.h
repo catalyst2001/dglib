@@ -6,6 +6,8 @@ typedef struct dg_string_s {
 	uint8_t* pstring;
 } dg_string_t;
 
+typedef const char* dg_cstr_t;
+
 #define string_init_static(str) ((dg_string_t){             \
         .length = sizeof(str)-sizeof(str[0]),               \
         .pstring = (uint8_t*)(str)                          \
@@ -62,6 +64,9 @@ DG_API void*    mem_copy(void* dst, const void* src, size_t count);
 DG_API void*    mem_move(void* dst, const void* src, size_t count);
 DG_API int      mem_compare(const void* a, const void* b, size_t count);
 
+DG_API const char* str_format(char *pdst, size_t dstlen, const char *pformat, ...);
+DG_API const char* str_vformat(char *pdst, size_t dstlen, const char* pformat, va_list argptr);
+
 DG_API bool     dgstr_copy_from(dg_string_t* dst, const char* src);
 DG_API bool     dgstr_copy(dg_string_t* dst, const dg_string_t* src);
 DG_API bool     dgstr_append(dg_string_t* dst, const char* src, size_t length);
@@ -106,6 +111,9 @@ typedef wchar_t dg_wchar_t;
 #else
 typedef unsigned short dg_wchar_t;
 #endif
+
+DG_API int         ansi_to_wide(dg_wchar_t *pdst, size_t dstcount, const char *psrc);
+DG_API int         wide_to_ansi(char *pdst, size_t dstcount, const dg_wchar_t *psrc);
 
 DG_API size_t      wcs_length(const dg_wchar_t* s);
 DG_API dg_wchar_t* wcs_duplicate(size_t* dstlen, const dg_wchar_t* s);

@@ -14,7 +14,7 @@ typedef struct dt_id_s {
 
 #define DT_DECL_BEGIN(type)\
 	struct type##_s;\
-	typedef struct type##_s type##_t;\
+	typedef struct type##_s type;\
 	struct type##_s {\
 		dt_id_t id;
 
@@ -47,4 +47,10 @@ size_t dt_copy(void **pdst, const void *psrc, size_t maxfunctions);
 /**
 * new object declaration
 */
-#define DECL_OBJECT(obj_type_name, obj_dt_name)
+#define DECL_OBJECT_BEGIN(obj_type_name, obj_dt_name)\
+struct obj_type_name##_s;\
+typedef struct obj_type_name##_s obj_type_name;\
+struct obj_type_name##_s {\
+	obj_dt_name *pdt;
+
+#define DECL_OBJECT_END() };

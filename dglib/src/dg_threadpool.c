@@ -35,7 +35,7 @@ int tp_init(dg_threadpool_t* ptp, size_t num_threads)
 
   /* init containers */
   ptp->pfinish_sem = semaphore_alloc(0, (int)cpuinfo.num_logical_processors, "dg_threadpool_t:pfinish_sem");
-  ptp->workers = darray_init(dg_worker_t, cpuinfo.num_logical_processors, 1, 0);
+  ptp->workers = (dg_darray_t)darray_init(dg_worker_t, cpuinfo.num_logical_processors, 1, 0);
   if (!mtqueue_alloc(&ptp->tasks, sizeof(dg_task_t), DG_TASKS_QUEUE_DEFAULT_LIMIT)) {
     DG_ERROR("threadpool_init(): mtqueue_alloc() failed");
     return DGERR_OUT_OF_MEMORY;

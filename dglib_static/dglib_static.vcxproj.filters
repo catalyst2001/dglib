@@ -39,6 +39,12 @@
     <ClInclude Include="include\dg_queue.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\dg_map.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dg_treemap.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dg_atomic.c">

@@ -248,3 +248,12 @@ bool path_back_folder(dg_path_t* ppath) {
   ppath->size = pos;
   return true;
 }
+
+char* path_remove_file_ext(char* ppath)
+{
+  char* dot = strrchr(ppath, '.');
+  if (dot && dot != ppath)
+    *dot = '\0';
+  
+  return ppath;
+}

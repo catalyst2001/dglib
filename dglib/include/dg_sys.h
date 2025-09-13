@@ -10,6 +10,18 @@
 #pragma once
 #include "dg_libcommon.h"
 
+#define SYS_MAX_PATH 512
+
+#ifdef _WIN32
+#define DGSYS_PLATFORM_LIBRARY_EXT ".dll"
+#elif __linux__
+#define DGSYS_PLATFORM_LIBRARY_EXT ".so"
+#elif __APPLE__
+#define DGSYS_PLATFORM_LIBRARY_EXT ".dylib"
+#else
+#error "Unknown platform!"
+#endif
+
 typedef struct hdl_s {
 	struct { void* punused; } s;
 } hdl_t;
@@ -28,6 +40,7 @@ DG_API int sys_dlclose(hdl_t *psrc);
 DG_API int sys_dlinfo(dg_dlinfo_t *pdst, hdl_t hmodule);
 DG_API int sys_dlsym(void **pdst, hdl_t hmodule, const char *psymname);
 DG_API int sys_dlenum(hdl_t *pdstdls, size_t maxlen);
+DG_API void* sys_dlloadproc(const char* ppath, const char* pprocname);
 
 typedef struct sys_dl_dt_s {
 	int (*psys_dlopen)(hdl_t* pdst, const char* ppath);
@@ -88,34 +101,19 @@ DG_API int sys_show_msgbox(dg_sysui parent_window, const char* pcaption, const c
 
 DG_API dg_sysui sysui_create_ex(const dg_sysui_create_info_ex_t *pcreateinfo);
 
-/**
-* @brief 
-* 
-* 
-* 
+/*
+===============================
+ label
+===============================
 */
-static inline dg_sysui sysui_create_button(dg_sysui hparent, 
-	long id, const char *ptext, long x, long y, long w, long h, long flags) {
-	enum { WIDGETID_BUTTON = 1 };
-	struct dg_sysui_button_s {
-		long flags;
-		const char* pbutton_name;
-	}
-	button_descriptor = {
-		.pbutton_name = ptext,
-		.flags=flags
-	};
+DG_API dg_sysui sysui_label_create(dg_sysui hparent, long x, long y, long width, long height, uint32_t id, const char* ptext, ...);
+DG_API void     sysui_label_set_text(dg_sysui hlabel, const char *ptext);
+DG_API void     sysui_label_get_text(char* pdst, size_t dstlen, dg_sysui hlabel);
 
-	dg_sysui_create_info_ex_t widget_desctiptor = {
-		.hparent=hparent,
-		.id = id,
-		.widgetid = WIDGETID_BUTTON,
-		.pname = "sysui_button",
-		.pexstruct=&button_descriptor,
-		.exstruct_size=sizeof(button_descriptor)
-	};
-	return sysui_create_ex(&widget_desctiptor);
-}
+DG_API dg_sysui sysui_image_create(dg_sysui hparent, long x, long y, long width, long height, uint32_t id, const char* ppath);
+DG_API dg_sysui sysui_button_create(dg_sysui hparent, long x, long y, long width, long height, uint32_t id, const char* name);
+DG_API dg_sysui sysui_editbox_create(dg_sysui hparent, long x, long y, long width, long height, uint32_t id, const char* name);
+DG_API dg_sysui sysui_textbox_create(dg_sysui hparent, long x, long y, long width, long height, uint32_t id, const char* name);
 
 DG_API int      sysui_set_size(dg_sysui handle, dg_sysui_size_t size);
 DG_API int      sysui_get_size(dg_sysui_size_t *pdst, dg_sysui handle);

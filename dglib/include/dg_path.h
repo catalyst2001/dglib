@@ -25,6 +25,8 @@ DG_API int  path_get_filename(dg_path_t *pdst_filename, const dg_path_t *psrc);
 DG_API void path_fix_slashes(dg_path_t *ppath);
 DG_API bool path_back_folder(dg_path_t* ppath);
 
+DG_API char* path_remove_file_ext(char* ppath);
+
 static inline dg_wchar_t* path_get_string(const dg_path_t* ppath) { return ppath->pstring; }
 static inline bool path_is_empty(const dg_path_t* ppath) { return !ppath->pstring || !ppath->pstring[0]; }
 static inline size_t path_get_length(const dg_path_t* ppath) { return ppath->size; }

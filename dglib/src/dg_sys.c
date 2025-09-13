@@ -2,6 +2,7 @@
 #include "dg_string.h"
 #include "dg_alloc.h"
 #include "dg_sync.h"
+#include "dg_path.h"
 
 #define DG_WINDOW_CLASS "diddygod"
 
@@ -616,7 +617,11 @@ int sysin_get_key_state(int keycode)
 
 int sys_dlopen(hdl_t* pdst, const char* ppath)
 {
-	return glob_moduledt.psys_dlopen(pdst, ppath);
+	char path[SYS_MAX_PATH];
+  str_copy(path, ppath, sizeof(path));
+	path_remove_file_ext(path);
+  str_concat(path, sizeof(path), DGSYS_PLATFORM_LIBRARY_EXT);
+	return glob_moduledt.psys_dlopen(pdst, path);
 }
 
 int sys_dlclose(hdl_t* psrc)
@@ -637,6 +642,16 @@ int sys_dlsym(void** pdst, hdl_t hmodule, const char* psymname)
 int sys_dlenum(hdl_t* pdsthmodules, size_t maxlen)
 {
 	return glob_moduledt.psys_dlenum(pdsthmodules, maxlen);
+}
+
+void* sys_dlloadproc(const char* ppath, const char* pprocname)
+{
+	hdl_t dl = { 0 };
+  void* pproc = NULL;
+	if (sys_dlopen(&dl, ppath) == 0)
+		sys_dlsym(&pproc, dl, pprocname);
+
+	return pproc;
 }
 
 sys_dl_dt_t* sys_get_module_api_dt()

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dg_mempool.h" />
     <ClInclude Include="include\dg_atomic.h" />
     <ClInclude Include="include\dg_bitvec.h" />
     <ClInclude Include="include\dg_bswap.h" />
@@ -27,6 +28,7 @@
     <ClInclude Include="include\dg_libcommon.h" />
     <ClInclude Include="include\dg_list.h" />
     <ClInclude Include="include\dg_map.h" />
+    <ClInclude Include="include\dg_mempool.h" />
     <ClInclude Include="include\dg_queue.h" />
     <ClInclude Include="include\dg_treemap.h" />
   </ItemGroup>
@@ -36,6 +38,7 @@
     <ClCompile Include="src\dg_darray.c" />
     <ClCompile Include="src\dg_dt.c" />
     <ClCompile Include="src\dg_list.c" />
+    <ClCompile Include="src\dg_mempool.c" />
     <ClCompile Include="src\dg_queue.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

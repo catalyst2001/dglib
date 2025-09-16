@@ -45,6 +45,12 @@
     <ClInclude Include="include\dg_treemap.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="dg_mempool.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dg_mempool.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dg_atomic.c">
@@ -64,6 +70,9 @@
     </ClCompile>
     <ClCompile Include="src\dg_queue.c">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dg_mempool.c">
+      <Filter>include</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -157,3 +157,17 @@ static inline void* darray3d_get_ex(
 }
 
 #define darray3d_get(pd,i,j,k,type) (*((type*)darray3d_get_ex((pd),(i),(j),(k))))
+
+/*
+=======================
+ dynamic arrays macro
+=======================
+*/
+#define DARRAY_DECL(name, type)\
+typedef struct name##_s {\
+  size_t size;\
+  size_t cap;\
+  type *pdata;\
+} name##_t;
+
+//TODO: K.D. continue

@@ -2,7 +2,7 @@
 #include "dg_libcommon.h"
 
 #if defined(_MSC_VER)
-#define DG_DTCALL __fastcall
+#define DG_DTCALL 
 #elif defined(__GCC__) || defined(__clang__)
 #define DG_DTCALL 
 #endif

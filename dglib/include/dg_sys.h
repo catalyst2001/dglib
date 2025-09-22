@@ -5,12 +5,12 @@
   and unloading dynamic libraries, searching for symbol addresses, 
   querying basic information about a dynamic library, 
   and some functions for working with the system user interface.
- Authors: Deryabin K.  Obidin N.
+ Authors: Deryabin K.
 ===============================*/
 #pragma once
 #include "dg_libcommon.h"
 
-#define SYS_MAX_PATH 512
+#define SYS_MAX_PATH 512 /*< max path length */
 
 #ifdef _WIN32
 #define DGSYS_PLATFORM_LIBRARY_EXT ".dll"
@@ -22,38 +22,136 @@
 #error "Unknown platform!"
 #endif
 
+/**
+* @brief Dynamic library handle
+*/
 typedef struct hdl_s {
 	struct { void* punused; } s;
 } hdl_t;
 
+/**
+* @brief Dynamic library information structure
+*/
 typedef struct dg_dlinfo_s {
-	char   filename[512];
-	void*  pbase;
-	void*  pentrypoint;
-	size_t sizeofimage;
-	size_t sizeofdata;
-	size_t sizeofcode;
+	char   filename[512]; /*< library file name */
+	void* pbase; 				/*< base address where the library is loaded */
+	void* pentrypoint; 	/*< entry point address */
+	size_t sizeofimage; /*< size of the loaded image in memory */
+	size_t sizeofdata; /*< size of initialized and uninitialized data */
+	size_t sizeofcode; /*< size of code section */
 } dg_dlinfo_t;
 
+/**
+* @brief load dynamic library
+* @param pdst pointer to the handle that will receive the library handle
+* @param ppath path to the dynamic library file
+* @return 0 if successful, or a negative error code
+* 
+* @note The library file extension should not be specified in the path
+*/
 DG_API int sys_dlopen(hdl_t *pdst, const char *ppath);
+
+/**
+* @brief unload dynamic library
+* @param psrc pointer to the handle of the library to be unloaded
+* @return 0 if successful, or a negative error code
+*/
 DG_API int sys_dlclose(hdl_t *psrc);
+
+/**
+* @brief get information about the loaded dynamic library
+* @param pdst pointer to the structure that will receive the library information
+* @param hmodule handle of the library to query information about
+* @return 0 if successful, or a negative error code
+*/
 DG_API int sys_dlinfo(dg_dlinfo_t *pdst, hdl_t hmodule);
+
+/**
+* @brief get the address of a symbol in the loaded dynamic library
+* @param pdst pointer to the variable that will receive the symbol address
+* @param hmodule handle of the library to search for the symbol
+* @param psymname name of the symbol to search for
+* @return 0 if successful, or a negative error code
+*/
 DG_API int sys_dlsym(void **pdst, hdl_t hmodule, const char *psymname);
+
+/**
+* @brief enumerate loaded dynamic libraries in current process
+* @param pdstdls pointer to the array that will receive the library handles
+* @param maxlen maximum number of handles that can be stored in the array
+* @return number of libraries stored in the array, or a negative error code
+*/
 DG_API int sys_dlenum(hdl_t *pdstdls, size_t maxlen);
+
+/**
+* @brief load a dynamic library and get the address of a symbol in it
+* @param ppath path to the dynamic library file
+* @param pprocname name of the symbol to search for
+* @return address of the symbol if successful, or NULL on failure
+*/
 DG_API void* sys_dlloadproc(const char* ppath, const char* pprocname);
 
+/**
+* @brief get the system API for dynamic library operations
+*/
 typedef struct sys_dl_dt_s {
+	/**
+	* @brief load dynamic library
+	* @param pdst pointer to the handle that will receive the library handle
+	* @param ppath path to the dynamic library file
+	*	@return 0 if successful, or a negative error code
+	*/
 	int (*psys_dlopen)(hdl_t* pdst, const char* ppath);
+
+	/**
+	* @brief unload dynamic library
+	* @param psrc pointer to the handle of the library to be unloaded
+	* @return 0 if successful, or a negative error code
+	*/
 	int (*psys_dlclose)(hdl_t* psrc);
+
+	/**
+	* @brief get information about the loaded dynamic library
+	* @param pdst pointer to the structure that will receive the library information
+	* @param hmodule handle of the library to query information about
+	* @return 0 if successful, or a negative error code
+	*/
 	int (*psys_dlinfo)(dg_dlinfo_t* pdst, hdl_t hmodule);
+
+	/**
+	* @brief get the address of a symbol in the loaded dynamic library
+	* @param pdst pointer to the variable that will receive the symbol address
+	* @param hmodule handle of the library to search for the symbol
+	* @param psymname name of the symbol to search for
+	* @return 0 if successful, or a negative error code
+	*/
 	int (*psys_dlsym)(void** pdst, hdl_t hmodule, const char* psymname);
+
+	/**
+	* @brief enumerate loaded dynamic libraries in current process
+	* @param pdstdls pointer to the array that will receive the library handles
+	* @param maxlen maximum number of handles that can be stored in the array
+	* @return number of libraries stored in the array, or a negative error code
+	*/
 	int (*psys_dlenum)(dg_dlinfo_t* pdsthmodules, size_t maxlen);
 } sys_dl_dt_t;
 
+/**
+* @brief get the system API for dynamic library operations
+*/
 DG_API sys_dl_dt_t* sys_get_module_api_dt();
 
+/**
+* @brief get the command line string
+* @return pointer to the command line string
+*/
 DG_API const char* sys_get_cmdline();
 
+/**
+* @brief terminate the process with the specified exit code
+* @param code exit code
+* @note This function does not return
+*/
 DG_API void sys_pexit(int code);
 
 /*

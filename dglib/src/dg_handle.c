@@ -20,6 +20,7 @@ bool ha_init(dg_handle_alloc_t* pha,
   return true;
 }
 
+//TODO: K.D. ha_deinit() and ha_init_static() problem! NOT FREE GENERATIONS AND BLOCKS IF THEY ARE STATIC ARRAYS!!!!!!!!!!!!!
 void ha_init_static(dg_handle_alloc_t* pha, size_t blocksize, size_t nhandles, uint8_t* pblocks, uint32_t* pgens)
 {
   assert(pha && "pha is NULL");
@@ -30,6 +31,7 @@ void ha_init_static(dg_handle_alloc_t* pha, size_t blocksize, size_t nhandles, u
   pha->reserve = 0;
 }
 
+//TODO: K.D. ha_deinit() and ha_init_static() problem! NOT FREE GENERATIONS AND BLOCKS IF THEY ARE STATIC ARRAYS!!!!!!!!!!!!!
 void ha_deinit(dg_handle_alloc_t* pha)
 {
   assert(pha && "pha is NULL");

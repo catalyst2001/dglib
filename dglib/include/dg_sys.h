@@ -133,7 +133,7 @@ typedef struct sys_dl_dt_s {
 	* @param maxlen maximum number of handles that can be stored in the array
 	* @return number of libraries stored in the array, or a negative error code
 	*/
-	int (*psys_dlenum)(dg_dlinfo_t* pdsthmodules, size_t maxlen);
+	int (*psys_dlenum)(hdl_t* pdsthmodules, size_t maxlen);
 } sys_dl_dt_t;
 
 /**

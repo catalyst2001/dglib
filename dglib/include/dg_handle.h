@@ -164,4 +164,8 @@ DG_API dg_handle_t ha_get_first_handle(dg_handle_alloc_t* pha, size_t start, boo
 */
 DG_API bool ha_get_next_handle(dg_handle_t *pdst, dg_handle_alloc_t* pha);
 
+static inline bool ha_is_empty_handle(dg_handle_t handle) {
+	return handle.hvalue != DG_HANDLE_INVALID_VALUE;
+}
+
 #endif // __dg_handle_h__

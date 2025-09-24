@@ -33,7 +33,7 @@ searchpathinf_t* fsi_search_path_by_id(dg_handle_t* pdsth, const char* ppathid)
 	searchpathinf_t* pspi;
 	dg_handle_t handle = ha_get_first_handle(&glob_search_pathes, 0, false);
 	if (handle.hvalue != DG_HANDLE_INVALID_VALUE) {
-		while (ha_get_next_handle(&handle, &glob_search_pathes)) {
+		do {
 			pspi = (searchpathinf_t*)ha_get_handle_data(&glob_search_pathes, handle);
 			if (pspi && !str_compare(pspi->id, ppathid, true)) {
 				if (pdsth) {
@@ -41,7 +41,7 @@ searchpathinf_t* fsi_search_path_by_id(dg_handle_t* pdsth, const char* ppathid)
 				}
 				return pspi;
 			}
-		}
+		} while (ha_get_next_handle(&handle, &glob_search_pathes));
 	}
 	return NULL;
 }

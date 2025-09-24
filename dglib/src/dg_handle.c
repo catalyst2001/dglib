@@ -159,15 +159,21 @@ dg_handle_t ha_get_first_handle(dg_handle_alloc_t* pha, size_t start, bool is_fr
 bool ha_get_next_handle(dg_handle_t* pdst, dg_handle_alloc_t* pha)
 {
   assert(pha && "pha is NULL");
-  dg_handle_t handle = *pdst;
+  if (!(pdst->gen & 1u))
+    return false; /* received invalid handle from last iteration */
+
   uint32_t num_handles = (uint32_t)pha->nhandles;
-  while (handle.index < num_handles) {
-    handle.gen = pha->pgenerations[handle.index];
-    if ((handle.gen & 1u) != 0) {
-      /* valid handle found */
-      return true;
+  for (pdst->index; pdst->index < num_handles; pdst->index++) {
+    pdst->gen = pha->pgenerations[pdst->index];
+    if ((pdst->gen & 1u) == 0) {
+      /* skip free handles */
+      continue;
     }
-    handle.index++;
+
+    /* valid busy handle found */
+    pdst->index++;
+    return true;
   }
+  /* all next handles is free */
   return false;
 }

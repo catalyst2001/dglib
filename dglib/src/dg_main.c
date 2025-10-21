@@ -19,12 +19,15 @@ int dg_initialize()
 		DG_ERROR("dg_initialize(): failed to init threads");
 		return 0;
 	}
+	time_init();
 	return 1;
 }
 
 void dg_deinitialize()
 {
-	deinitialize_sysui();
-	deinitialize_filesystem();
+	time_deinit();
 	deinitialize_threads();
+	deinitialize_filesystem();
+	deinitialize_sysui();
+	deinitialize_memory();
 }

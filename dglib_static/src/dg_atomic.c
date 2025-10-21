@@ -44,7 +44,7 @@ size_t dg_atomic_fetch_sub(atomic_size_t* ptr, atomic_size_t val)
 #if defined(_M_X64)
   return ((size_t)InterlockedExchangeAdd64((volatile atomic_size_t*)(ptr), (atomic_size_t)(-val)));
 #else
-  ((size_t)InterlockedExchangeAdd((volatile LONG*)(ptr), (LONG)(-val)))
+  return ((size_t)InterlockedExchangeAdd((volatile LONG*)(ptr), (LONG)(-val)))
 #endif
 }
 

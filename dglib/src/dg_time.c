@@ -32,6 +32,10 @@ void time_init()
   QueryPerformanceFrequency(&global_freq);
 }
 
+void time_deinit()
+{
+}
+
 #else
 
 #endif

@@ -51,6 +51,9 @@
     <ClInclude Include="include\dg_mempool.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\dg_stack.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dg_atomic.c">
@@ -73,6 +76,9 @@
     </ClCompile>
     <ClCompile Include="src\dg_mempool.c">
       <Filter>include</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dg_stack.c">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

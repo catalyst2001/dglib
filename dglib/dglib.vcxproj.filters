@@ -63,6 +63,9 @@
     <ClInclude Include="include\dg_time.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\dg_tmsg.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dg_alloc.c">
@@ -109,6 +112,9 @@
     </ClCompile>
     <ClCompile Include="src\dg_time.c">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dg_tmsg.c">
+      <Filter>include</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

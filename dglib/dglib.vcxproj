@@ -37,6 +37,7 @@
     <ClInclude Include="include\dg_thread.h" />
     <ClInclude Include="include\dg_threadpool.h" />
     <ClInclude Include="include\dg_time.h" />
+    <ClInclude Include="include\dg_tmsg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dg_alloc.c" />
@@ -54,6 +55,7 @@
     <ClCompile Include="src\dg_thread.c" />
     <ClCompile Include="src\dg_threadpool.c" />
     <ClCompile Include="src\dg_time.c" />
+    <ClCompile Include="src\dg_tmsg.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

@@ -30,6 +30,7 @@
     <ClInclude Include="include\dg_map.h" />
     <ClInclude Include="include\dg_mempool.h" />
     <ClInclude Include="include\dg_queue.h" />
+    <ClInclude Include="include\dg_stack.h" />
     <ClInclude Include="include\dg_treemap.h" />
   </ItemGroup>
   <ItemGroup>
@@ -40,6 +41,7 @@
     <ClCompile Include="src\dg_list.c" />
     <ClCompile Include="src\dg_mempool.c" />
     <ClCompile Include="src\dg_queue.c" />
+    <ClCompile Include="src\dg_stack.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

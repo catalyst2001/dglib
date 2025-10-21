@@ -717,16 +717,21 @@ int fs_write_u64(dg_file_t hfile, uint64_t src, int endian)
 void* fs_ftomem(size_t* pdst, dg_pathid_t pathid, const char* pfilename)
 {
 	dg_file_t fh;
+	dg_wchar_t path[1024];
 	if (!pdst || !pfilename)
 		return NULL;
 
-	if (fs_open_file(&fh, pathid, (const wchar_t*)pfilename, FS_BIN, FS_R) != 0)
+	if(ansi_to_wide(path, sizeof(path) / sizeof(*path), pfilename) ==-1)
+		return NULL;
+
+	if (fs_open_file(&fh, pathid, path, FS_BIN, FS_R) != 0)
 		return NULL;
 
 	fs_seek(fh, 0, FS_END);
 	int64_t sz = fs_tell(fh);
 	fs_seek(fh, 0, FS_SET);
 	if (sz <= 0) {
+		*pdst = 0;
 		fs_close(fh);
 		return NULL;
 	}

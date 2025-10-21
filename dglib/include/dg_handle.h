@@ -78,6 +78,8 @@ DG_API void ha_init_static(dg_handle_alloc_t* pha,
 * @brief deinitializes handle allocator and frees all allocated memory
 * @param pha - pointer to the handle allocator structure
 * @return none
+* 
+* @note if the handle allocator was initialized with static arrays, do not call this function
 */
 DG_API void ha_deinit(dg_handle_alloc_t* pha);
 

@@ -440,16 +440,21 @@ bool dgstr_append(dg_string_t* dst, const char* src, size_t length) {
 	if (!dst || !src)
 		return false;
 
-	size_t sl = str_length(src);
-	if (length > sl)
-		length = sl;
+	size_t sl;
+	if (length == 0) {
+		sl = str_length(src);
+	}
+	else {
+		sl = length;
+	}
 
-	size_t nl = dst->length + length;
+	size_t nl = dst->length + sl;
 	uint8_t* buf = (uint8_t*)realloc(dst->pstring, nl + 1);
 	if (!buf)
 		return false;
 
-	mem_copy(buf + dst->length, src, length);
+	/* copy sl bytes from src */
+	mem_copy(buf + dst->length, src, sl);
 	buf[nl] = '\0';
 	dst->pstring = buf;
 	dst->length = nl;

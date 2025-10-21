@@ -307,8 +307,57 @@ To unify virtual key codes, key constants defined by this
 abstraction are used, which try to follow the most common majority of virtual codes.
 ===============================
 */
-DG_API uint8_t* sysin_get_keys_array(size_t *pdstsize);
-DG_API int      sysin_get_key_state(int keycode);
+DG_API uint8_t*     sysin_get_keys_array(size_t *pdstsize);
+DG_API int          sysin_get_key_state(int keycode);
+DG_API void         sysin_get_cursor_pos(int* px, int* py);
+DG_API void         sysin_set_cursor_pos(int x, int y);
+
+/* CURSOR API */
+typedef dg_voidptr_t dg_syscursor;
+
+enum SYSCUR_TYPE {
+	SYSCUR_ARROW = 0,
+	SYSCUR_IBEAM,
+	SYSCUR_WAIT,
+	SYSCUR_CROSS,
+	SYSCUR_UPARROW,
+	SYSCUR_SIZE_NWSE,
+	SYSCUR_SIZE_NESW,
+	SYSCUR_SIZE_WE,
+	SYSCUR_SIZE_NS,
+	SYSCUR_SIZE_ALL,
+	SYSCUR_NO,
+	SYSCUR_HAND,
+
+	SYSCUR_TOTAL_CURSORS
+};
+
+DG_API dg_syscursor sys_create_native_cursor(enum SYSCUR_TYPE cursor_type);
+DG_API dg_syscursor sys_create_custom_cursor(const char* ppath, int hotx, int hoty);
+DG_API void         sys_destroy_cursor(dg_syscursor hcursor);
+DG_API void         sys_set_cursor(dg_syscursor hcursor);
+DG_API dg_syscursor sys_get_cursor();
+
+typedef struct dg_cursor_mode_s {
+	int mode;
+} dg_cursor_mode_t;
+
+DG_API int          sys_set_cursor_mode(const dg_cursor_mode_t *pmode);
+DG_API int          sys_get_cursor_mode(dg_cursor_mode_t *pmode);
+
+DG_API void         sys_show_cursor(bool show);
+DG_API bool         sys_is_cursor_visible();
+
+/* CLIPBOARD */
+enum SYS_CLIPBOARD_DATA {
+	SYS_CLIPBOARD_DATA_NONE = 0,
+	SYS_CLIPBOARD_DATA_TEXT,
+	SYS_CLIPBOARD_DATA_IMAGE,
+};
+
+DG_API int          sys_set_clipboard_text(const char* ptext);
+DG_API int          sys_get_clipboard_text(char* pdst, size_t maxlen);
+DG_API int          sys_get_clipboard_data_type();
 
 #define SYSKS_RELEASED  (0) /*< key is released */
 #define SYSKS_PRESSED   (1 << 1) /*< key is pressed */

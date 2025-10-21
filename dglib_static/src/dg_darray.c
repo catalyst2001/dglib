@@ -74,6 +74,52 @@ int darray_copy(dg_darray_t* dst, const dg_darray_t* src)
   return DGERR_SUCCESS;
 }
 
+void darray_remove_from(dg_darray_t* pdarray, size_t idxfrom)
+{
+  if (!pdarray->pdata || !pdarray->size || pdarray->elemsize==0)
+    return;
+
+  /* element in begin or mid in array? */
+  if ((idxfrom + 1) < pdarray->size) {
+    memmove(
+      darray_get_internal(pdarray, idxfrom),
+      darray_get_internal(pdarray, idxfrom + 1),
+      pdarray->elemsize
+    );
+    pdarray->size--;
+  }
+  else {
+    /*
+    element in the back
+    decrement size
+    */
+    pdarray->size--;
+  }
+}
+
+void darray_remove_from_fast(dg_darray_t* pdarray, size_t idxfrom)
+{
+  if (!pdarray->pdata || pdarray->size || pdarray->elemsize == 0)
+    return;
+
+  /* element in begin or mid in array? */
+  if (idxfrom < pdarray->size) {
+    memcpy(
+      darray_get_internal(pdarray, idxfrom),
+      darray_get_internal(pdarray, pdarray->size - 1),
+      pdarray->elemsize
+    );
+    pdarray->size--;
+  }
+  else {
+    /*
+    element in the back
+    decrement size
+    */
+    pdarray->size--;
+  }
+}
+
 void darray_insert_from(dg_darray_t* pd, const dg_darray_t* ps, size_t from, size_t count)
 {
   assert(ps && pd);

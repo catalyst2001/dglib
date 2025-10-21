@@ -17,5 +17,9 @@ void deinitialize_threads();
 int  initialize_memory();
 void deinitialize_memory();
 
+/* time */
+void time_init();
+void time_deinit();
+
 DG_API int dg_initialize();
 DG_API void dg_deinitialize();

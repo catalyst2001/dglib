@@ -1,3 +1,9 @@
+/*===============================
+ "Diggy Gods" Team  Copyright (c) 2025.
+
+ Purpose: Common declarations and macros
+ Authors: Deryabin K.
+===============================*/
 #pragma once
 #include <assert.h>
 #include <stdlib.h>
@@ -42,6 +48,14 @@ enum DGERR {
 #define DG_INRANGE(x, a, b) (x >= a && x <= b)
 
 #define DG_UNUSED(x) ((void)x)
+
+/* C99 compatible compile-time assert */
+#ifndef DG_STATIC_ASSERT
+#define DG_STATIC_ASSERT_GLUE(a,b) a##b
+#define DG_STATIC_ASSERT_LINE(a,b) DG_STATIC_ASSERT_GLUE(a,b)
+#define DG_STATIC_ASSERT(cond) \
+    typedef char DG_STATIC_ASSERT_LINE(static_assert_failed_at_line_, __LINE__)[(cond) ? 1 : -1]
+#endif
 
 /**
 * common declarations

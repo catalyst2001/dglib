@@ -157,6 +157,15 @@ bool    darray_free(dg_darray_t* pdarray);
  * @return Pointer to new element or NULL on failure
  */
 void*   darray_add_back(dg_darray_t* pdarray);
+
+/**
+ * @brief Add multiple elements to back, return pointer to new elements
+ * @param pdarray Pointer to array
+ * @param count Number of elements to add
+ * @return Pointer to new element or NULL on failure
+ */
+void* darray_add_back_multiple(dg_darray_t* pdarray, size_t count);
+
 /**
  * @brief Push element to back (copy from src)
  * @param pdarray Pointer to array

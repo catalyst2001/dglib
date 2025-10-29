@@ -255,6 +255,7 @@ DG_API int str_hex_byte(const char* hex);
 * @returns pointer to the destination memory block
 */
 DG_API void* mem_set(void* dst, int value, size_t count);
+#define      zmem(dst, count) mem_set((dst), 0, (count))
 
 /**
 * @brief copy memory from source to destination

@@ -338,8 +338,19 @@ DG_API void         sys_destroy_cursor(dg_syscursor hcursor);
 DG_API void         sys_set_cursor(dg_syscursor hcursor);
 DG_API dg_syscursor sys_get_cursor();
 
+/* Cursor mode flags */
+#define DG_CURSOR_MODE_NONE      0
+#define DG_CURSOR_MODE_INFINITE  (1 << 0) /* capture & center cursor for relative movement (FPS)
+                                               cursor confined to window and recentered to keep deltas valid */
+
 typedef struct dg_cursor_mode_s {
-	int mode;
+	int mode;       /* mode flags (DG_CURSOR_MODE_*) */
+	/* center in client coordinates (window-local) */
+	int center_x;
+	int center_y;
+	/* center in screen coordinates (for sysin_set_cursor_pos) */
+	int center_sx;
+	int center_sy;
 } dg_cursor_mode_t;
 
 DG_API int          sys_set_cursor_mode(const dg_cursor_mode_t *pmode);

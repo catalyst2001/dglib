@@ -752,14 +752,73 @@ static dg_cursor_mode_t glob_cursor_mode = { 0 };
 
 int sys_set_cursor_mode(const dg_cursor_mode_t* pmode)
 {
+	if (!pmode)
+		return 1; // invalid
+
+	/* store mode */
 	mem_copy(&glob_cursor_mode, pmode, sizeof(glob_cursor_mode));
-	//TODO: K.D. implement setting cursor mode functionality here!
+
+	/* initialize center values to zero by default */
+	glob_cursor_mode.center_x = 0;
+	glob_cursor_mode.center_y = 0;
+	glob_cursor_mode.center_sx = 0;
+	glob_cursor_mode.center_sy = 0;
+
+#ifdef _WIN32
+	/* implement infinite cursor mode: confine to current foreground window and recenter */
+	HWND hwnd = GetForegroundWindow();
+	if (pmode->mode & DG_CURSOR_MODE_INFINITE) {
+		if (hwnd) {
+			RECT crect;
+			if (GetClientRect(hwnd, &crect)) {
+				/* top-left in screen coords */
+				POINT topLeft;
+				topLeft.x = crect.left; topLeft.y = crect.top;
+				ClientToScreen(hwnd, &topLeft);
+				RECT clip = { topLeft.x, topLeft.y, topLeft.x + crect.right, topLeft.y + crect.bottom };
+				ClipCursor(&clip);
+
+				/* center in client coords */
+				int cx = crect.right / 2;
+				int cy = crect.bottom / 2;
+				/* center in screen coords */
+				POINT centerScreen;
+				centerScreen.x = topLeft.x + cx;
+				centerScreen.y = topLeft.y + cy;
+
+				/* recenter cursor */
+				SetCursorPos(centerScreen.x, centerScreen.y);
+				/* hide cursor for better UX in FPS mode */
+				ShowCursor(FALSE);
+
+				/* store centers in global cursor mode */
+				glob_cursor_mode.center_x = cx;
+				glob_cursor_mode.center_y = cy;
+				glob_cursor_mode.center_sx = centerScreen.x;
+				glob_cursor_mode.center_sy = centerScreen.y;
+			}
+		}
+	}
+	else {
+		/* restore normal cursor behaviour */
+		ClipCursor(NULL);
+		/* show cursor */
+		ShowCursor(TRUE);
+		glob_cursor_mode.center_x = 0;
+		glob_cursor_mode.center_y = 0;
+		glob_cursor_mode.center_sx = 0;
+		glob_cursor_mode.center_sy = 0;
+	}
+#endif
+
 	return 0;
 }
 
 int sys_get_cursor_mode(dg_cursor_mode_t* pmode)
 {
-	mem_copy(pmode, &glob_cursor_mode, sizeof(glob_cursor_mode));
+	if (!pmode)
+		return 1;
+	mem_copy(pmode, &glob_cursor_mode, sizeof(*pmode));
 	return 0;
 }
 

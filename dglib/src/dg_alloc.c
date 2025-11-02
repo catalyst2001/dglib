@@ -5,6 +5,21 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+enum {
+	MEM_BLOCK_END_MARK = 0xAAAAAAAA
+};
+
+/*
+===============================
+_win32_mem_alloc()
+windows default heap memory allocator
+===============================
+*/
+static void* _win32_mem_alloc(HANDLE heap, size_t size, uint32_t flags)
+{
+
+}
+
 /* default impl */
 void* win32_mem_alloc(void* poldmem, size_t size, uint32_t flags) {
 	void* ptr;
@@ -53,6 +68,9 @@ int win32_mem_free(void* pmem) {
 }
 
 void* win32_mem_alloc_debug(void* poldmem, size_t size, uint32_t flags, const char* pfile, int line) {
+
+
+
 	void* ptr = win32_mem_alloc(poldmem, size, flags);
 	if (!ptr) {
 		DG_ERROR("mem_alloc_debug(): allocation failed! File: %s Line: %d\n", pfile, line);

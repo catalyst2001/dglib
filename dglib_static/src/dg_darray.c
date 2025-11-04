@@ -10,8 +10,10 @@
 static bool try_ensure_capacity(dg_darray_t* pd, size_t newcap)
 {
   if (!pd->pdata || newcap > pd->capacity) {
-    pd->capacity = newcap + pd->reserve;
-    uint8_t* tmp = realloc(pd->pdata, pd->capacity * pd->elemsize);
+    if(newcap > pd->capacity)
+      pd->capacity = newcap + pd->reserve;
+
+    uint8_t* tmp = realloc(pd->pdata, pd->capacity * pd->elemsize); //FIXME: K.D. realloc freeing old memory!
     if (!tmp)
       return false;
     

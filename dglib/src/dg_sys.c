@@ -992,7 +992,7 @@ inline static UINT sysflags_to_win32_flags(int sysflags)
 		dst |= MB_OK;
 	if (sysflags & SYS_ID_CANCEL)
 		dst |= MB_OKCANCEL;
-	if (sysflags & MB_RETRYCANCEL)
+	if (sysflags & SYS_ID_RETRY)
 		dst |= MB_RETRYCANCEL;
 
 	return dst;
